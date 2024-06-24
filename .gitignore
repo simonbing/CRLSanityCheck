@@ -164,3 +164,6 @@ cython_debug/
 # Downloaded data
 *.csv
 *.zip
+
+# PCL save folder
+crc/baselines/PCL/storage
