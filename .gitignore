@@ -163,3 +163,4 @@ cython_debug/
 
 # Downloaded data
 *.csv
+*.zip
