@@ -1,0 +1,3 @@
+[submodule "crc/baselines/discrepancy_vae"]
+	path = crc/baselines/discrepancy_vae
+	url = git@github.com:simonbing/discrepancy_vae.git
