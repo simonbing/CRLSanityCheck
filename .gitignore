@@ -167,3 +167,6 @@ cython_debug/
 
 # PCL save folder
 crc/baselines/PCL/storage
+
+# Datasets downloads folder
+crc/data/
