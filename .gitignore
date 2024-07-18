@@ -171,3 +171,4 @@ crc/baselines/PCL/storage
 # Datasets downloads folder
 crc/data/
 data
+results
