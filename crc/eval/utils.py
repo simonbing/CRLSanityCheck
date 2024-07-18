@@ -5,6 +5,19 @@ from scipy.optimize import linear_sum_assignment
 
 
 def compute_MCC(z_hat, z, batch_size=128):
+    """
+    Args:
+        z_hat: np.array[n_samples, n_components]
+            Learned sources.
+        z: np.array[n_samples, n_gt_components]
+            Ground truth sources.
+        batch_size: int
+            Batch size.
+
+    Returns:
+        mcc_arr: np.array[n_samples, n_components]
+            MCC scores.
+    """
     num_samples = z_hat.shape[0]
     latent_dim = z_hat.shape[1]
     total_batches = int(num_samples/batch_size)
@@ -24,7 +37,7 @@ def compute_MCC(z_hat, z, batch_size=128):
         cost = -1*np.abs(cross_corr)
         row_ind, col_ind = linear_sum_assignment(cost)
         score = 100*(-1*cost[row_ind, col_ind].sum())/latent_dim
-        print(-100*cost[row_ind, col_ind])
+        # print(-100*cost[row_ind, col_ind])
 
         mcc_arr.append(score)
 
