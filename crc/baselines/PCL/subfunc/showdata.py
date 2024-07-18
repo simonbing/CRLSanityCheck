@@ -97,6 +97,7 @@ def showtimedata(x, xlabel='Time', ylabel='Channel', fontsize=14, linewidth=1.5,
     # normalize the signal
     x = x - np.mean(x, axis=0, keepdims=True)
     x = x / np.max(np.abs(x), axis=0, keepdims=True) * 0.45
+    x = np.nan_to_num(x)
     # x = (x - np.mean(x, axis=0, keepdims=True)) / np.std(x, axis=0, keepdims=True)
 
     vinterval = 1

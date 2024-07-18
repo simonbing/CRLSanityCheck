@@ -25,6 +25,7 @@ def train(data,
           decay_factor,
           batch_size,
           train_dir,
+          latent_dim=4,
           ar_order=1,
           weight_decay=0,
           moving_average_decay=0.999,
@@ -60,7 +61,7 @@ def train(data,
         np.random.seed(random_seed)
         torch.manual_seed(random_seed)
 
-    num_data, num_dim = data.shape
+    num_data, in_dim = data.shape
 
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
@@ -72,7 +73,8 @@ def train(data,
 
     # define network
     model = pcl.Net(h_sizes=list_hidden_nodes,
-                    num_dim=num_dim,
+                    in_dim=in_dim,
+                    latent_dim=latent_dim,
                     ar_order=ar_order)
     model = model.to(device)
     model.train()

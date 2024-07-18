@@ -21,7 +21,7 @@ class Maxout(nn.Module):
 # =============================================================
 # =============================================================
 class Net(nn.Module):
-    def __init__(self, h_sizes, num_dim, ar_order=1, pool_size=2):
+    def __init__(self, h_sizes, in_dim, latent_dim, ar_order=1, pool_size=2):
         """ Network model for gaussian distribution with scale-mean modulations
          Args:
              h_sizes: number of channels for each layer [num_layer+1] (first size is input-dim)
@@ -32,16 +32,16 @@ class Net(nn.Module):
         super(Net, self).__init__()
         assert ar_order == 1  # this model is only for AR(1)
         # h
-        h_sizes_aug = [num_dim] + h_sizes
+        h_sizes_aug = [in_dim] + h_sizes
         h = [nn.Linear(h_sizes_aug[k-1], h_sizes_aug[k]*pool_size) for k in range(1, len(h_sizes_aug)-1)]
         h.append(nn.Linear(h_sizes_aug[-2], h_sizes_aug[-1], bias=False))
         self.h = nn.ModuleList(h)
-        self.bn = nn.BatchNorm1d(num_features=num_dim)
+        self.bn = nn.BatchNorm1d(num_features=latent_dim)
         self.maxout = Maxout(pool_size)
-        self.w = nn.Conv1d(in_channels=num_dim, out_channels=num_dim, kernel_size=2, groups=num_dim)
+        self.w = nn.Conv1d(in_channels=latent_dim, out_channels=latent_dim, kernel_size=2, groups=latent_dim)
         self.a = nn.Parameter(torch.ones([1]))
         self.m = nn.Parameter(torch.zeros([1]))
-        self.num_dim = num_dim
+        self.latent_dim = latent_dim
 
         # initialize
         for k in range(len(self.h)):
@@ -63,7 +63,7 @@ class Net(nn.Module):
             if k != len(self.h)-1:
                 h = self.maxout(h)
         h = self.bn(h)
-        h = h.reshape([batch_size, -1, num_dim])  # [batch, ar, dim]
+        h = h.reshape([batch_size, -1, self.latent_dim])  # [batch, ar, dim]
 
         # Build r(y) ----------------------------------------------
         #   sum_i |w1i*hi(y1) + w2i*hi(y2) + bi| + a * (hi(y1))^2 + m
