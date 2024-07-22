@@ -1,1 +1,1 @@
-from crc.baselines.discrepancy_vae.wrapper import TrainCMVAE
+from crc.baselines.discrepancy_vae.wrapper import TrainCMVAE, EvalCMVAE

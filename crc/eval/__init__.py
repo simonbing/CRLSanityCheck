@@ -1,1 +1,1 @@
-from crc.eval.utils import compute_MCC
+from crc.eval.eval_metrics import compute_MCC

@@ -1,7 +1,10 @@
+import random
 import sys
 import time
 
 from absl import flags, app
+import numpy as np
+import torch
 import wandb
 
 from crc.baselines import TrainCMVAE
@@ -36,6 +39,11 @@ class TrainApplication(object):
                                epochs=self.epochs, lat_dim=self.lat_dim)
 
     def run(self):
+        # Set all seeds
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
+        random.seed(self.seed)
+
         self.trainer.train()
 
     def _get_trainer(self):

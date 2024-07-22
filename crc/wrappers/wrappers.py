@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 import os
 
-import numpy as np
+import torch
+
+from crc.utils import get_device
 
 
 class TrainModel(ABC):
@@ -32,5 +34,29 @@ class TrainModel(ABC):
 
 
 class EvalModel(ABC):
-    def __init__(self):
-        pass
+    """
+    This abstract base class serves as a wrapper for evaluating different models
+    on multiple metrics.
+    """
+    def __init__(self, trained_model_path):
+        """
+        Args:
+            trained_model_path: (str) Path to trained pytorch model.
+        """
+        self.device = get_device()
+        self.trained_model = torch.load(trained_model_path)
+        self.trained_model = self.trained_model.to(self.device)
+
+    @abstractmethod
+    def get_encodings(self, dataset_test):
+        """
+        Returns the learned latent encoding of the input data.
+
+        Args:
+            dataset_test: (torch.Dataset) Contains test data, including ground truth
+
+        Returns:
+            z: (np.array [n, latent_dims]) Ground truth latents
+            z_hat: (np.array [n, latent_dims]) The learned latent encodings
+        """
+        raise NotImplementedError
