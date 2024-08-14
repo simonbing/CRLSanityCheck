@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from crc.baselines import EvalCMVAE
-from crc.eval import compute_MCC
+from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
@@ -50,10 +50,13 @@ class EvalApplication(object):
 
         # Evaluate all methods
         if 'SHD' in self.metrics:
-            pass
+            G, G_hat = self.evaluator
+            shd, shd_opt = compute_SHD(G, G_hat)
         elif 'MCC' in self.metrics:
             z, z_hat = self.evaluator.get_encodings(dataset_test)
-            mcc = compute_MCC(z_hat, z)
+            # TODO decide which one to keep
+            mcc1 = compute_MCC(z_hat, z)
+            mcc, _, _ = mean_corr_coef_np(z, z_hat)
             a=0
 
     def _get_evaluator(self):

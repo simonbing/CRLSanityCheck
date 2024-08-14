@@ -48,6 +48,10 @@ class EvalModel(ABC):
         self.trained_model = self.trained_model.to(self.device)
 
     @abstractmethod
+    def get_adjacency_matrices(self, dataset_test):
+         raise NotImplementedError
+
+    @abstractmethod
     def get_encodings(self, dataset_test):
         """
         Returns the learned latent encoding of the input data.
