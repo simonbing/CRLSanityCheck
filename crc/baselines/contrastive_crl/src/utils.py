@@ -90,4 +90,4 @@ def get_chamber_data(dataset, seed, batch_size):
         dataloader_obs_val, dataloader_int_val = databag.get_dataloaders(
             batch_size=batch_size, train=True)
 
-        a=0
+        return dataloader_obs, dataloader_int, dataloader_obs_val, dataloader_int_val
