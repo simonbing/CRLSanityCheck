@@ -1,3 +1,9 @@
+import os
+import pickle
+
+import torch
+from torch.utils.data import DataLoader
+
 from crc.baselines.contrastive_crl.src.data_generation import get_data_from_kwargs
 from crc.baselines.contrastive_crl.src.utils import get_chamber_data
 from crc.baselines.contrastive_crl.src.models import get_contrastive_synthetic, get_contrastive_image
@@ -12,7 +18,7 @@ class TrainContrastCRL(TrainModel):
         super().__init__(**kwargs)
 
     def _get_model(self):
-        if self.dataset == 'contrastive_synth':
+        if self.dataset == 'contrast_synth':
             return get_contrastive_synthetic(input_dim=20, latent_dim=self.lat_dim,
                                              hidden_dim=512, hidden_layers=0,
                                              residual=True)
@@ -24,35 +30,56 @@ class TrainContrastCRL(TrainModel):
         Adapted from source code for "Learning Linear Causal Representations
         from Interventions under General Nonlinear Mixing".
         """
-        # Get data
-        dataloader_obs, dataloader_int, \
-            dataloader_obs_val, dataloader_int_val = \
-            get_chamber_data(dataset=self.dataset,
-                             seed=self.seed,
-                             batch_size=self.batch_size)
+        device = get_device()
+        print(f'using device: {device}')
 
-        # # Prepare data for training
-        # mixing = 'mlp' # TODO: this can also be 'image', make this an argument
-        # data_kwargs = {
-        #     'mixing': mixing,
-        #     'd': None,
-        #     'k': None,
-        #     'n': None,
-        #     'seed': self.seed,
-        #     'dim_x': None,
-        #     'hidden_dim': None,
-        #     'hidden_layers': None
-        # } # TODO get these kwargs
-        # databag = get_data_from_kwargs(data_kwargs) # databags is the term used in original code
+        # TODO: sample test data (5000 samples)
+        # Get data
+        dataset_train, dataset_val, dataset_test = get_chamber_data(dataset=self.dataset, seed=self.seed)
+
+        # Make dataloaders
+        dl_train = DataLoader(dataset_train, shuffle=True, batch_size=self.batch_size)
+        dl_val = DataLoader(dataset_val, shuffle=False, batch_size=self.batch_size)
+        dl_test = DataLoader(dataset_train, shuffle=False, batch_size=self.batch_size)
+
+        # Save train data (as torch dataset)
+        train_data_path = os.path.join(self.model_dir, 'train_dataset.pkl')
+        if not os.path.exists(train_data_path):
+            with open(train_data_path, 'wb') as f:
+                pickle.dump(dataset_train, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        val_data_path = os.path.join(self.model_dir, 'val_dataset.pkl')
+        if not os.path.exists(val_data_path):
+            with open(val_data_path, 'wb') as f:
+                pickle.dump(dataset_val, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        test_data_path = os.path.join(self.model_dir, 'test_dataset.pkl')
+        if not os.path.exists(test_data_path):
+            with open(test_data_path, 'wb') as f:
+                pickle.dump(dataset_test, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         # Save training config metadata
         # TODO
 
-        # Save train data (as torch dataset)
-        # TODO
+
 
         # Build model
         model = self._get_model()
 
+        training_kwargs = {
+            'epochs': self.epochs,
+            'optimizer_name': 'adam',
+            'mu': 10e-5,
+            'eta': 10e-4,
+            'kappa': 1.0, # TODO: figure out the correct value for this
+            'lr_nonparametric': 5*10e-4
+        }
+
         # Train model
-        _, _, _, _ = train_model()
+        best_model, last_model, _, _ = train_model(model, device, dl_train, dl_val,
+                                 training_kwargs)
+        # Save model
+        torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
+        torch.save(last_model, os.path.join(self.train_dir, 'lest_model.pt'))
+
+        a=0

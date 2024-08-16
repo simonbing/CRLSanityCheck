@@ -48,6 +48,7 @@ class DataBag:
         self.repeat_obs_samples = repeat_obs_samples
         self.train_samples = int(n * train_fraction)
         self.val_samples = n - self.train_samples
+        self.test_samples = 5000
         self.noise_type = noise_type
         self.constrain_samples = kwargs.get('constrain_to_image', False)
         W, self.ordering = dag_avg_deg(p=d, k=k, w_min=.25, w_max=1., return_ordering=True, random_state=seed)
@@ -60,6 +61,7 @@ class DataBag:
         self.lganm = sempler.LGANM(self.W, np.zeros(d), self.var_obs)
         self.obs, self.int, self.targets = self.sample(self.train_samples, repeat_obs_samples)
         self.obs_val, self.int_val, self.targets_val = self.sample(self.val_samples, repeat_obs_samples)
+        self.obs_test, self.int_test, self.targets_test = self.sample(self.test_samples, repeat_obs_samples)
         self.obs_f, self.int_f, self.obs_f_val, self.int_f_val = self.get_observations_cached()
 
     @staticmethod
@@ -141,6 +143,27 @@ class DataBag:
         obs_dataloader = DataLoader(obs_dataset, shuffle=True, batch_size=batch_size)
         int_dataloader = DataLoader(int_dataset, shuffle=True, batch_size=batch_size)
         return obs_dataloader, int_dataloader
+
+    def get_datasets(self, mode='train'):
+        if mode == 'train':
+            obs = self.obs
+            intven = self.int
+            targets = self.targets
+        elif mode == 'val':
+            obs = self.obs_val
+            intven = self.int_val
+            targets = self.targets_val
+        elif mode == 'test':
+            obs = self.obs_test
+            intven = self.int_test
+            targets = self.targets_test
+        else:
+            raise ValueError("Invalid mode passed! Must be train, val or test.")
+
+        # obs_dataset = ObservationalDataset(obs, self.f)
+        # int_dataset = InterventionalDataset(intven, self.f, targets)
+        dataset = ContrastiveCRLDataset(obs, intven, self.f, targets)
+        return dataset
 
     def get_dataloaders_cached(self, batch_size, train=True):
         obs_f = self.obs_f if train else self.obs_f_val
@@ -266,5 +289,17 @@ class InterventionalDataset(Dataset):
         return self.transform(self.z[idx]), self.t[idx]
 
 
+class ContrastiveCRLDataset(Dataset):
+    def __init__(self, z_obs, z_int, f, t):
+        self.z_obs = torch.tensor(z_obs, dtype=torch.float)
+        self.z_int = torch.tensor(z_int, dtype=torch.float)
+        self.f = f
+        self.t = torch.tensor(t)
+        self.transform = transforms.Compose([f])
 
+    def __len__(self):
+        return len(self.z_obs)
 
+    def __getitem__(self, idx):
+        # Return a tuple (obs_sample, int_sample, target) at the given index
+        return self.transform(self.z_obs[idx]), self.transform(self.z_int[idx]), self.t[idx]

@@ -6,6 +6,7 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
+import wandb
 from types import SimpleNamespace
 from crc.baselines.contrastive_crl.src.evaluation import LossCollection, get_R2_values
 
@@ -14,8 +15,8 @@ def get_NOTEARS_loss(A):
     return torch.trace(torch.matrix_exp(A * A) - A.size(0))
 
 
-def train_model(model, dl_obs, dl_int, dl_obs_test, dl_int_test, training_kwargs, z_gt=None, x_val=None, verbose=False):
-    device = training_kwargs.get("device", 'cpu')
+def train_model(model, device, dl_train, dl_val, training_kwargs, z_gt=None, x_val=None, verbose=False):
+    # device = training_kwargs.get("device", 'cpu')
     model = model.to(device)
     best_model = copy.deepcopy(model)
 
@@ -64,8 +65,8 @@ def train_model(model, dl_obs, dl_int, dl_obs_test, dl_int_test, training_kwargs
     for i in tqdm(range(epochs)):
     # for i in range(epochs):
         model.train()
-        for step, data in enumerate(zip(dl_obs, dl_int)):
-            x_obs, x_int, t_int = data[0], data[1][0], data[1][1]
+        for step, data in enumerate(dl_train):
+            x_obs, x_int, t_int = data[0], data[1], data[2]
             x_obs, x_int, t_int = x_obs.to(device), x_int.to(device), t_int.to(device)
             if contrastive:
                 logits_int = model(x_int, t_int)
@@ -89,12 +90,21 @@ def train_model(model, dl_obs, dl_int, dl_obs_test, dl_int_test, training_kwargs
                               ce(logits_int, torch.ones(x_int.size(0), dtype=torch.long, device=device))
             accuracy = (torch.sum(torch.argmax(logits_obs, dim=1) == 0) +
                         torch.sum(torch.argmax(logits_int, dim=1) == 1)) / (2 * x_int.size(0))
-            if device == 'mps':
-                reg_loss = eta * torch.sum(torch.abs(model.parametric_part.A))
-            else:
-                reg_loss = eta * torch.sum(torch.abs(model.parametric_part.A)) + mu * get_NOTEARS_loss(model.parametric_part.A)
+            # if device == 'mps':
+            #     reg_loss = eta * torch.sum(torch.abs(model.parametric_part.A))
+            # else:
+            #     reg_loss = eta * torch.sum(torch.abs(model.parametric_part.A)) + mu * get_NOTEARS_loss(model.parametric_part.A)
+            reg_loss = eta * torch.sum(
+                torch.abs(model.parametric_part.A)) + mu * get_NOTEARS_loss(
+                model.parametric_part.A)
 
             loss = method_specific_loss + classifier_loss + reg_loss
+
+            wandb.log({'loss': loss.detach().cpu().numpy(),
+                       'method_specific_loss': method_specific_loss.detach().cpu().numpy(),
+                       'classifier_loss': classifier_loss.detach().cpu().numpy(),
+                       'reg_loss': reg_loss.detach().cpu().numpy()})
+
             optim.zero_grad()
             loss.backward()
             optim.step()
@@ -109,8 +119,9 @@ def train_model(model, dl_obs, dl_int, dl_obs_test, dl_int_test, training_kwargs
         else:
             train_loss_history.append(loss_tracker.get_mean_loss()['CE-loss'])
         loss_tracker.reset()
-        for step, data in enumerate(zip(dl_obs_test, dl_int_test)):
-            x_obs, x_int, t_int = data[0], data[1][0], data[1][1]
+        # Validation step
+        for step, data in enumerate(dl_val):
+            x_obs, x_int, t_int = data[0], data[1], data[2]
             x_obs, x_int, t_int = x_obs.to(device), x_int.to(device), t_int.to(device)
             if contrastive:
                 logits_int = model(x_int, t_int)

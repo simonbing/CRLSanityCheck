@@ -66,7 +66,7 @@ def save_images(images, dir, filename):
         generated_image_pil.save(os.path.join(dir, '{}_{}.png'.format(filename, i)))
 
 
-def get_chamber_data(dataset, seed, batch_size):
+def get_chamber_data(dataset, seed):
     # For sanity checking contrastive CRL code
     if dataset == 'contrast_synth':
         mixing = 'mlp'  # TODO: this can also be 'image', make this an argument
@@ -85,9 +85,13 @@ def get_chamber_data(dataset, seed, batch_size):
         }  # TODO get these kwargs
         databag = get_data_from_kwargs(data_kwargs)  # databags is the term used in original code
 
-        dataloader_obs, dataloader_int = databag.get_dataloaders(
-            batch_size=batch_size, train=True)
-        dataloader_obs_val, dataloader_int_val = databag.get_dataloaders(
-            batch_size=batch_size, train=True)
+        # dataloader_obs, dataloader_int = databag.get_dataloaders(
+        #     batch_size=batch_size, train=True)
+        # dataloader_obs_val, dataloader_int_val = databag.get_dataloaders(
+        #     batch_size=batch_size, train=False)
 
-        return dataloader_obs, dataloader_int, dataloader_obs_val, dataloader_int_val
+        dataset_train = databag.get_datasets(mode='train')
+        dataset_val = databag.get_datasets(mode='val')
+        dataset_test = databag.get_datasets(mode='test')
+
+        return dataset_train, dataset_val, dataset_test
