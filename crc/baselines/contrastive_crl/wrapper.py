@@ -40,7 +40,6 @@ class TrainContrastCRL(TrainModel):
         # Make dataloaders
         dl_train = DataLoader(dataset_train, shuffle=True, batch_size=self.batch_size)
         dl_val = DataLoader(dataset_val, shuffle=False, batch_size=self.batch_size)
-        dl_test = DataLoader(dataset_train, shuffle=False, batch_size=self.batch_size)
 
         # Save train data (as torch dataset)
         train_data_path = os.path.join(self.model_dir, 'train_dataset.pkl')
@@ -80,6 +79,25 @@ class TrainContrastCRL(TrainModel):
                                  training_kwargs)
         # Save model
         torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
-        torch.save(last_model, os.path.join(self.train_dir, 'lest_model.pt'))
+        torch.save(last_model, os.path.join(self.train_dir, 'last_model.pt'))
 
-        a=0
+
+class EvalContrastCRL(EvalModel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get_adjacency_matrices(self, dataset_test):
+        G = dataset_test.W
+        G_hat = self.trained_model.parametric_part.A.t().cpu().detach().numpy()
+
+        return G, G_hat
+
+    def get_encodings(self, dataset_test):
+        self.trained_model.eval()
+
+        z_gt = dataset_test.z_obs
+        x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
+
+        z_hat = self.trained_model.get_z(x_gt).cpu().detach().numpy()
+
+        return z_gt, z_hat
