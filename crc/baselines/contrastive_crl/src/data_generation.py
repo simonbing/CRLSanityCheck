@@ -162,7 +162,7 @@ class DataBag:
 
         # obs_dataset = ObservationalDataset(obs, self.f)
         # int_dataset = InterventionalDataset(intven, self.f, targets)
-        dataset = ContrastiveCRLDataset(obs, intven, self.f, targets)
+        dataset = ContrastiveCRLDataset(obs, intven, self.f, targets, self.W)
         return dataset
 
     def get_dataloaders_cached(self, batch_size, train=True):
@@ -290,11 +290,12 @@ class InterventionalDataset(Dataset):
 
 
 class ContrastiveCRLDataset(Dataset):
-    def __init__(self, z_obs, z_int, f, t):
+    def __init__(self, z_obs, z_int, f, t, W):
         self.z_obs = torch.tensor(z_obs, dtype=torch.float)
         self.z_int = torch.tensor(z_int, dtype=torch.float)
         self.f = f
         self.t = torch.tensor(t)
+        self.W = W
         self.transform = transforms.Compose([f])
 
     def __len__(self):
