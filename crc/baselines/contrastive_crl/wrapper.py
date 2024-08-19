@@ -80,7 +80,7 @@ class TrainContrastCRL(TrainModel):
 
         # Save training config metadata
         with open(os.path.join(self.train_dir, 'config.json'), 'w') as f:
-            json.dump(training_metadata+training_kwargs, f, indent=4)
+            json.dump(training_metadata | training_kwargs, f, indent=4)
 
         # Train model
         best_model, last_model, _, _ = train_model(model, device, dl_train,

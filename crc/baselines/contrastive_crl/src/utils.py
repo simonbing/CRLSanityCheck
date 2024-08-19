@@ -91,40 +91,39 @@ def get_chamber_data(dataset, exp, seed):
         dataset_val = databag.get_datasets(mode='val')
         dataset_test = databag.get_datasets(mode='test')
     else:
-        chamber_dataset = ChamberDataset(dataset=dataset, experiment=exp, eval=False)
+        chamber_dataset = ChamberDataset(dataset=dataset, experiment=exp, eval=True)
         # Split dataset into train, val, test
-        n = len(chamber_dataset)
+        d = chamber_dataset.W.shape[0]
+        n_per_env = int(len(chamber_dataset)/d)
 
         train_frac = 2/3
         val_frac = 1/6
         test_frac = 1/6
 
-        n_train = int(n * train_frac)
-        n_val = int(n * val_frac)
-        n_test = int(n * test_frac)
+        n_train = int(n_per_env * train_frac)
+        n_val = int(n_per_env * val_frac)
+        n_test = int(n_per_env * test_frac)
 
-        train_idxs, intermed_idxs = split_chamberdata(chamber_dataset,
-                                                     train_samples=n_train)
+        train_idxs, val_idxs, test_idxs = split_chamberdata(chamber_dataset,
+                                                            train_samples=n_train,
+                                                            val_samples=n_val)
         dataset_train = Subset(chamber_dataset, train_idxs)
-        dataset_intermed = Subset(chamber_dataset, intermed_idxs)
-
-        val_idxs, test_idxs = split_chamberdata(dataset_intermed,
-                                                train_samples=n_val)
-        dataset_val = Subset(dataset_intermed, val_idxs)
-        dataset_test = Subset(dataset_intermed, test_idxs)
-
-        dataset_test.eval = True
+        dataset_val = Subset(chamber_dataset, val_idxs)
+        dataset_test = Subset(chamber_dataset, test_idxs)
 
     return dataset_train, dataset_val, dataset_test
 
 
-def split_chamberdata(dataset, train_samples):
+def split_chamberdata(dataset, train_samples, val_samples):
     train_idx = []
+    val_idx = []
     for iv in np.unique(dataset.iv_names):
         idx = list(np.where(dataset.iv_names == iv)[0])
         train_idx.append(idx[0:train_samples])
+        val_idx.append(idx[train_samples:train_samples+val_samples])
 
     train_idx = list(np.hstack(train_idx))
-    test_idx = [l for l in range(len(dataset)) if l not in train_idx]
+    val_idx = list(np.hstack(val_idx))
+    test_idx = [l for l in range(len(dataset)) if l not in train_idx + val_idx]
 
-    return train_idx, test_idx
+    return train_idx, val_idx, test_idx

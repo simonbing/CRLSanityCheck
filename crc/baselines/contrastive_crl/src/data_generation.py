@@ -339,6 +339,10 @@ class ChamberDataset(Dataset):
         iv_data_4 = chamber_data.get_experiment(name=f'{self.exp}_pol_1').as_pandas_dataframe()
         iv_data_5 = chamber_data.get_experiment(name=f'{self.exp}_pol_2').as_pandas_dataframe()
         iv_data_list = [iv_data_1, iv_data_2, iv_data_3, iv_data_4, iv_data_5]
+        # Enforce that all iv_data have the same length
+        n_list = [len(df) for df in iv_data_list]
+        n_min = min(n_list)
+        iv_data_list = [df[:n_min] for df in iv_data_list]
         # Get one big df for all iv data
         self.iv_data = pd.concat(iv_data_list)
 
@@ -376,7 +380,7 @@ class ChamberDataset(Dataset):
         # Observational sample
         obs_img_name = os.path.join(self.data_root, self.chamber_data_name,
                                     f'{self.exp}_reference',
-                                    'images_64', # TODO: check that path is correct!
+                                    'images_64',
                                     self.obs_data['image_file'].iloc[item])
         obs_sample = io.imread(obs_img_name)
         # Interventional sample

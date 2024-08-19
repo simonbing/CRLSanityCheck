@@ -12,7 +12,7 @@ from crc.baselines import TrainCMVAE, TrainContrastCRL
 FLAGS = flags.FLAGS
 flags.DEFINE_enum('model', None, ['cmvae', 'contrast_crl'], 'Model to train.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth'], 'Dataset for training.')
-flags.DEFINE_enum('experiment', None, ['scm_1'], 'Experiment for training.')
+flags.DEFINE_string('experiment', None, 'Experiment for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 # Shared hyperparameters
 flags.DEFINE_integer('seed', 0, 'Random seed.')
