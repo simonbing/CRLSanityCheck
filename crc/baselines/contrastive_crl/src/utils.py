@@ -2,10 +2,11 @@ import os
 import numbers
 
 import torch
+from torch.utils.data import Subset
 from PIL import Image
 import numpy as np
 
-from crc.baselines.contrastive_crl.src.data_generation import get_data_from_kwargs
+from crc.baselines.contrastive_crl.src.data_generation import get_data_from_kwargs, ChamberDataset
 
 
 def sanity_checks_kwargs(data_kwargs, model_kwargs, training_kwargs):
@@ -66,7 +67,7 @@ def save_images(images, dir, filename):
         generated_image_pil.save(os.path.join(dir, '{}_{}.png'.format(filename, i)))
 
 
-def get_chamber_data(dataset, seed):
+def get_chamber_data(dataset, exp, seed):
     # For sanity checking contrastive CRL code
     if dataset == 'contrast_synth':
 
@@ -86,15 +87,44 @@ def get_chamber_data(dataset, seed):
         }
         databag = get_data_from_kwargs(data_kwargs)  # databags is the term used in original code
 
-        # dataloader_obs, dataloader_int = databag.get_dataloaders(
-        #     batch_size=batch_size, train=True)
-        # dataloader_obs_val, dataloader_int_val = databag.get_dataloaders(
-        #     batch_size=batch_size, train=False)
-
         dataset_train = databag.get_datasets(mode='train')
         dataset_val = databag.get_datasets(mode='val')
         dataset_test = databag.get_datasets(mode='test')
-
-        return dataset_train, dataset_val, dataset_test
     else:
-        pass
+        chamber_dataset = ChamberDataset(dataset=dataset, experiment=exp, eval=False)
+        # Split dataset into train, val, test
+        n = len(chamber_dataset)
+
+        train_frac = 2/3
+        val_frac = 1/6
+        test_frac = 1/6
+
+        n_train = int(n * train_frac)
+        n_val = int(n * val_frac)
+        n_test = int(n * test_frac)
+
+        train_idxs, intermed_idxs = split_chamberdata(chamber_dataset,
+                                                     train_samples=n_train)
+        dataset_train = Subset(chamber_dataset, train_idxs)
+        dataset_intermed = Subset(chamber_dataset, intermed_idxs)
+
+        val_idxs, test_idxs = split_chamberdata(dataset_intermed,
+                                                train_samples=n_val)
+        dataset_val = Subset(dataset_intermed, val_idxs)
+        dataset_test = Subset(dataset_intermed, test_idxs)
+
+        dataset_test.eval = True
+
+    return dataset_train, dataset_val, dataset_test
+
+
+def split_chamberdata(dataset, train_samples):
+    train_idx = []
+    for iv in np.unique(dataset.iv_names):
+        idx = list(np.where(dataset.iv_names == iv)[0])
+        train_idx.append(idx[0:train_samples])
+
+    train_idx = list(np.hstack(train_idx))
+    test_idx = [l for l in range(len(dataset)) if l not in train_idx]
+
+    return train_idx, test_idx

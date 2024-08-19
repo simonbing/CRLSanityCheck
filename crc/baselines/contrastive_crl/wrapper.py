@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 
@@ -33,9 +34,10 @@ class TrainContrastCRL(TrainModel):
         device = get_device()
         print(f'using device: {device}')
 
-        # TODO: sample test data (5000 samples)
         # Get data
-        dataset_train, dataset_val, dataset_test = get_chamber_data(dataset=self.dataset, seed=self.seed)
+        dataset_train, dataset_val, dataset_test = get_chamber_data(dataset=self.dataset,
+                                                                    exp=self.experiment,
+                                                                    seed=self.seed)
 
         # Make dataloaders
         dl_train = DataLoader(dataset_train, shuffle=True, batch_size=self.batch_size)
@@ -46,24 +48,25 @@ class TrainContrastCRL(TrainModel):
         if not os.path.exists(train_data_path):
             with open(train_data_path, 'wb') as f:
                 pickle.dump(dataset_train, f, protocol=pickle.HIGHEST_PROTOCOL)
-
+        # Save val data
         val_data_path = os.path.join(self.model_dir, 'val_dataset.pkl')
         if not os.path.exists(val_data_path):
             with open(val_data_path, 'wb') as f:
                 pickle.dump(dataset_val, f, protocol=pickle.HIGHEST_PROTOCOL)
-
+        # Save test data
         test_data_path = os.path.join(self.model_dir, 'test_dataset.pkl')
         if not os.path.exists(test_data_path):
             with open(test_data_path, 'wb') as f:
                 pickle.dump(dataset_test, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        # Save training config metadata
-        # TODO
-
-
-
         # Build model
         model = self._get_model()
+
+        training_metadata = {
+            'batch_size': self.batch_size,
+            'lat_dim': self.lat_dim,
+            'seed': self.seed
+        }
 
         training_kwargs = {
             'epochs': self.epochs,
@@ -75,9 +78,13 @@ class TrainContrastCRL(TrainModel):
             'weight_decay': 0.0
         }
 
+        # Save training config metadata
+        with open(os.path.join(self.train_dir, 'config.json'), 'w') as f:
+            json.dump(training_metadata+training_kwargs, f, indent=4)
+
         # Train model
-        best_model, last_model, _, _ = train_model(model, device, dl_train, dl_val,
-                                 training_kwargs)
+        best_model, last_model, _, _ = train_model(model, device, dl_train,
+                                                   dl_val, training_kwargs)
         # Save model
         torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
         torch.save(last_model, os.path.join(self.train_dir, 'last_model.pt'))

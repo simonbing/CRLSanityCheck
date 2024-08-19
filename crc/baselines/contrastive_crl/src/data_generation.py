@@ -165,8 +165,6 @@ class DataBag:
         else:
             raise ValueError("Invalid mode passed! Must be train, val or test.")
 
-        # obs_dataset = ObservationalDataset(obs, self.f)
-        # int_dataset = InterventionalDataset(intven, self.f, targets)
         dataset = ContrastiveCRLDataset(obs, intven, self.f, targets, self.W)
         return dataset
 
