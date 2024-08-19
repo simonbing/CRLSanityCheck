@@ -89,6 +89,8 @@ class TrainContrastCRL(TrainModel):
         torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
         torch.save(last_model, os.path.join(self.train_dir, 'last_model.pt'))
 
+        print('Training finished!')
+
 
 class EvalContrastCRL(EvalModel):
     def __init__(self, **kwargs):
