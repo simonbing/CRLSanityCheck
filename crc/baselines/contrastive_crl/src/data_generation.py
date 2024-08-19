@@ -294,7 +294,6 @@ class InterventionalDataset(Dataset):
 
 class ContrastiveCRLDataset(Dataset):
     def __init__(self, z_obs, z_int, f, t, W):
-        self.synth = True
         self.z_obs = torch.tensor(z_obs, dtype=torch.float)
         self.z_int = torch.tensor(z_int, dtype=torch.float)
         self.f = f
@@ -318,7 +317,6 @@ class ChamberDataset(Dataset):
                  eval=False,
                  transform=None):
         super(Dataset, self).__init__()
-        self.synth = False
         self.eval = eval
 
         self.transform = transform

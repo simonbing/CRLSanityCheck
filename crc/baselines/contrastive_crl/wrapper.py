@@ -5,7 +5,7 @@ import pickle
 import torch
 from torch.utils.data import DataLoader
 
-from crc.baselines.contrastive_crl.src.data_generation import get_data_from_kwargs
+from crc.baselines.contrastive_crl.src.data_generation import ContrastiveCRLDataset
 from crc.baselines.contrastive_crl.src.utils import get_chamber_data
 from crc.baselines.contrastive_crl.src.models import get_contrastive_synthetic, get_contrastive_image
 from crc.baselines.contrastive_crl.src.training import train_model
@@ -97,7 +97,10 @@ class EvalContrastCRL(EvalModel):
         super().__init__(**kwargs)
 
     def get_adjacency_matrices(self, dataset_test):
-        G = dataset_test.W
+        try:
+            G = dataset_test.W
+        except AttributeError:
+            G = dataset_test.dataset.W
         G_hat = self.trained_model.parametric_part.A.t().cpu().detach().numpy()
 
         return G, G_hat
@@ -105,7 +108,7 @@ class EvalContrastCRL(EvalModel):
     def get_encodings(self, dataset_test):
         self.trained_model.eval()
 
-        if dataset_test.synth:
+        if isinstance(dataset_test, ContrastiveCRLDataset):
             z_gt = dataset_test.z_obs
             x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
 

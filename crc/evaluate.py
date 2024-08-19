@@ -15,7 +15,7 @@ flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepre
                     'Root directory for experiments.')
 flags.DEFINE_enum('model', None, ['cmvae', 'contrast_crl'], 'Model to evaluate.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth'], 'Dataset for training.')
-flags.DEFINE_enum('experiment', None, ['scm_1'], 'Experiment for training.')
+flags.DEFINE_string('experiment', None, 'Experiment for training.')
 flags.DEFINE_string('run_name', None, 'Run name where trained model is saved.')
 flags.DEFINE_list('metrics', None, 'Evaluation metrics to calculate.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
@@ -50,7 +50,7 @@ class EvalApplication(object):
         # Evaluate all metrics
         results = {}
         if 'SHD' in self.metrics:
-            G, G_hat = self.evaluator
+            G, G_hat = self.evaluator.get_adjacency_matrices(dataset_test)
             shd, shd_opt = compute_SHD(G, G_hat)
 
             results['shd'] = shd
@@ -58,7 +58,7 @@ class EvalApplication(object):
 
             print(f'SHD: {shd}')
             print(f'SHD_opt: {shd_opt}')
-        elif 'MCC' in self.metrics:
+        if 'MCC' in self.metrics:
             z, z_hat = self.evaluator.get_encodings(dataset_test)
             # TODO decide which one to keep
             # mcc1 = compute_MCC(z_hat, z)
