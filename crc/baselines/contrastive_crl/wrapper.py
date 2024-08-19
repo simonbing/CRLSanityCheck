@@ -70,8 +70,9 @@ class TrainContrastCRL(TrainModel):
             'optimizer_name': 'adam',
             'mu': 10e-5,
             'eta': 10e-4,
-            'kappa': 1.0, # TODO: figure out the correct value for this
-            'lr_nonparametric': 5*10e-4
+            'kappa': 0.1,
+            'lr_nonparametric': 5*10e-4,
+            'weight_decay': 0.0
         }
 
         # Train model
@@ -95,9 +96,29 @@ class EvalContrastCRL(EvalModel):
     def get_encodings(self, dataset_test):
         self.trained_model.eval()
 
-        z_gt = dataset_test.z_obs
-        x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
+        if dataset_test.synth:
+            z_gt = dataset_test.z_obs
+            x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
 
-        z_hat = self.trained_model.get_z(x_gt).cpu().detach().numpy()
+            z_hat = self.trained_model.get_z(x_gt).cpu().detach().numpy()
+        else:
+            dataloader_test = DataLoader(dataset_test, shuffle=False)
+
+            z_list = []
+            z_hat_list = []
+            # Iterate over test dataloader and encode all samples and save gt data
+            for X in dataloader_test:
+                x_obs = X[0]
+                z_obs = X[3]
+
+                x_obs = x_obs.to(self.device)
+
+                z_hat_batch = self.trained_model.get_z(x_obs)
+
+                z_list.append(z_obs)
+                z_hat_list.append(z_hat_batch)
+
+            z_gt = torch.cat(z_list).cpu().detach().numpy()
+            z_hat = torch.cat(z_hat_list).cpu().detach().numpy()
 
         return z_gt, z_hat
