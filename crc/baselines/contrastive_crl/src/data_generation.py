@@ -2,15 +2,20 @@ import sempler
 from sempler.generators import dag_avg_deg
 from sempler.lganm import _parse_interventions
 import numpy as np
+import os
+import pandas as pd
 import random
 import torch
 
+from skimage import io
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data import TensorDataset as TensorDataset
 import torchvision.transforms as transforms
 
 from crc.baselines.contrastive_crl.src.nonlinearities import Identity, Linear_Nonlinearity, ImageGenerator
 from crc.baselines.contrastive_crl.src.models import EmbeddingNet
+
+from causalchamber.datasets import Dataset as ChamberData
 
 
 def get_data_from_kwargs(data_kwargs):
@@ -291,6 +296,7 @@ class InterventionalDataset(Dataset):
 
 class ContrastiveCRLDataset(Dataset):
     def __init__(self, z_obs, z_int, f, t, W):
+        self.synth = True
         self.z_obs = torch.tensor(z_obs, dtype=torch.float)
         self.z_int = torch.tensor(z_int, dtype=torch.float)
         self.f = f
@@ -304,3 +310,105 @@ class ContrastiveCRLDataset(Dataset):
     def __getitem__(self, idx):
         # Return a tuple (obs_sample, int_sample, target) at the given index
         return self.transform(self.z_obs[idx]), self.transform(self.z_int[idx]), self.t[idx]
+
+
+class ChamberDataset(Dataset):
+    def __init__(self,
+                 dataset,
+                 experiment,
+                 data_root='/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads',
+                 eval=False,
+                 transform=None):
+        super(Dataset, self).__init__()
+        self.synth = False
+        self.eval = eval
+
+        self.transform = transform
+
+        self.data_root = data_root
+        self.chamber_data_name = dataset
+        self.exp = experiment
+        chamber_data = ChamberData(self.chamber_data_name, root=self.data_root,
+                                   download=True)
+
+        # Observational data
+        obs_data = chamber_data.get_experiment(
+            name=f'{self.exp}_reference').as_pandas_dataframe()
+        # Interventional data
+        iv_data_1 = chamber_data.get_experiment(name=f'{self.exp}_red').as_pandas_dataframe()
+        iv_data_2 = chamber_data.get_experiment(name=f'{self.exp}_green').as_pandas_dataframe()
+        iv_data_3 = chamber_data.get_experiment(name=f'{self.exp}_blue').as_pandas_dataframe()
+        iv_data_4 = chamber_data.get_experiment(name=f'{self.exp}_pol_1').as_pandas_dataframe()
+        iv_data_5 = chamber_data.get_experiment(name=f'{self.exp}_pol_2').as_pandas_dataframe()
+        iv_data_list = [iv_data_1, iv_data_2, iv_data_3, iv_data_4, iv_data_5]
+        # Get one big df for all iv data
+        self.iv_data = pd.concat(iv_data_list)
+
+        # Generate intervention index list
+        iv_names = []
+        for idx, iv_data in enumerate(iv_data_list):
+            iv_names.append(np.repeat(idx, len(iv_data)))
+        self.iv_names = np.concatenate(iv_names)
+
+        # Resample observational data to have same nr of samples as iv_data
+        self.obs_data = obs_data.loc[np.random.choice(len(obs_data),
+                                                      size=len(self.iv_data),
+                                                      replace=True), :]
+
+        # Get ground truth adjacency matrix
+        if self.exp in ('scm_1', 'scm_2'):
+            # TODO: probably need to follow some convention of making this upper triang
+            self.W = np.array(
+                [
+                    [0, 1, 0, 1, 0],
+                    [0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0],
+                    [0, 1, 1, 0, 0],
+                ]
+            )
+
+    def __len__(self):
+        return len(self.obs_data)
+
+    def __getitem__(self, item):
+        if torch.is_tensor(item):
+            item = item.tolist()
+
+        # Observational sample
+        obs_img_name = os.path.join(self.data_root, self.chamber_data_name,
+                                    f'{self.exp}_reference',
+                                    'images_64', # TODO: check that path is correct!
+                                    self.obs_data['image_file'].iloc[item])
+        obs_sample = io.imread(obs_img_name)
+        # Interventional sample
+        iv_img_name = os.path.join(self.data_root, self.chamber_data_name,
+                                   self._map_iv_envs(self.iv_names[item], self.exp),
+                                   'images_64',
+                                   self.iv_data['image_file'].iloc[item])
+        iv_sample = io.imread(iv_img_name)
+
+        if not self.eval:
+            return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
+                                   dtype=torch.float32), \
+                torch.as_tensor(iv_sample.transpose((2, 0, 1)),
+                                dtype=torch.float32), \
+                torch.as_tensor(self.iv_names[item],
+                                dtype=torch.int)
+        else: # also return the ground truth variables
+            Z_obs = self.obs_data[['red', 'green', 'blue', 'pol_1', 'pol_2']].iloc[item].to_numpy()
+            Z_iv = self.iv_data[['red', 'green', 'blue', 'pol_1', 'pol_2']].iloc[item].to_numpy()
+            return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
+                                   dtype=torch.float32), \
+                torch.as_tensor(iv_sample.transpose((2, 0, 1)),
+                                dtype=torch.float32), \
+                torch.as_tensor(self.iv_names[item],
+                                dtype=torch.int), \
+                Z_obs, Z_iv
+
+    @staticmethod
+    def _map_iv_envs(idx, exp):
+        # idx = int(idx)
+        map = [f'{exp}_red', f'{exp}_green', f'{exp}_blue', f'{exp}_pol_1', f'{exp}_pol_2']
+
+        return map[idx]

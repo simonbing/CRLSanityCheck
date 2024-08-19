@@ -69,9 +69,9 @@ def save_images(images, dir, filename):
 def get_chamber_data(dataset, seed):
     # For sanity checking contrastive CRL code
     if dataset == 'contrast_synth':
-        mixing = 'mlp'  # TODO: this can also be 'image', make this an argument
+
         data_kwargs = {
-            'mixing': mixing,
+            'mixing': 'mlp',
             'd': 5,
             'k': 2,
             'n': 10000,
@@ -81,8 +81,9 @@ def get_chamber_data(dataset, seed):
             'hidden_layers': 3,
             'var_range_obs': (1., 2.),
             'var_range_int': (1., 2.),
-            'mean_range': (1., 2.)
-        }  # TODO get these kwargs
+            'mean_range': (1., 2.),
+            'repeat_obs_samples': True
+        }
         databag = get_data_from_kwargs(data_kwargs)  # databags is the term used in original code
 
         # dataloader_obs, dataloader_int = databag.get_dataloaders(
@@ -95,3 +96,5 @@ def get_chamber_data(dataset, seed):
         dataset_test = databag.get_datasets(mode='test')
 
         return dataset_train, dataset_val, dataset_test
+    else:
+        pass
