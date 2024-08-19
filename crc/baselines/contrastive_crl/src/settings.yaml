@@ -1,0 +1,43 @@
+data:
+  d: 10      # Dim latents
+  dim_x: 100 # dim ambient
+  k: 4     # average degree of dag
+  n: 10000  # nr. of samples
+  var_range_obs:   # range of noise vars observational setting (uniform random from this range)
+  - 1.
+  - 2.
+  var_range_int:  # range of noise var term interventional setting (uniform random from this range)
+  - 1.
+  - 2.
+  var_shift: true # if false interventions do not change the variance
+  mean_range:   # range of mean shifts for interventions (uniform random from this range, then a sign is selected at random)
+  - 1.
+  - 2.
+  mixing: mlp  # one of linear, identity, mlp
+  hidden_dim: 512 # hidden dim of mlp if selected (otherwise ignored)
+  hidden_layers: 3 # nr hidden layers of mlp (otherwise ignored)
+  seed: 0 # initial seed for data generation, seed used is seed + run_nr
+  runs: 5
+  constrain_to_image: True # constrains sample to generate balls within the image
+  repeat_obs_samples: True
+
+
+model:
+  type: contrastive # one of contrastive or vae, currently we sweep anyway
+  hidden_dim: 512 # hidden dims of encoder decoder or embedding
+  hidden_layers: 0  # nr of hidden layers
+  residual: true  # make the hidden layers residual
+
+train:
+  batch_size: 512
+  restarts: 0   # nr of restarts from fresh initialisation, final model is the one with minimal validation loss
+  epochs: 200
+  device: cuda
+  eta: 0.0001      # l1 penalty
+  kappa: 0.1     # reg penalty to achieve mean zero for contrastive approach
+  mu: 0.00001       # dagness penalty (notears)
+  run_baseline: false  # if true the linear causal disentanglement algorithm is run
+  optimizer: Adam
+  lr_parametric: .0005
+  lr_nonparametric: .0005
+  weight_decay: 0.0
