@@ -110,7 +110,7 @@ class EvalContrastCRL(EvalModel):
         self.trained_model.eval()
 
         if isinstance(dataset_test, ContrastiveCRLDataset):
-            z_gt = dataset_test.z_obs
+            z_gt = dataset_test.z_obs.cpu().detach().numpy()
             x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
 
             z_hat = self.trained_model.get_z(x_gt).cpu().detach().numpy()
