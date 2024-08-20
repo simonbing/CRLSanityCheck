@@ -313,7 +313,7 @@ class ChamberDataset(Dataset):
     def __init__(self,
                  dataset,
                  experiment,
-                 data_root='/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads',
+                 data_root,
                  eval=False,
                  transform=None):
         super(Dataset, self).__init__()

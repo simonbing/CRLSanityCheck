@@ -7,9 +7,9 @@ from crc.utils import get_device
 
 
 class TrainModel(ABC):
-    def __init__(self, dataset, experiment, model, seed, batch_size, epochs,
-                 lat_dim, run_name,
-                 root_dir='/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results'):
+    def __init__(self, data_root, dataset, experiment, model, seed, batch_size,
+                 epochs, lat_dim, run_name, root_dir):
+        self.data_root = data_root
         self.dataset = dataset
         self.experiment = experiment
         self.model = model
