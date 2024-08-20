@@ -84,7 +84,8 @@ class TrainContrastCRL(TrainModel):
 
         # Train model
         best_model, last_model, _, _ = train_model(model, device, dl_train,
-                                                   dl_val, training_kwargs)
+                                                   dl_val, training_kwargs,
+                                                   verbose=True)
         # Save model
         torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
         torch.save(last_model, os.path.join(self.train_dir, 'last_model.pt'))
