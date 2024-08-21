@@ -100,10 +100,10 @@ def train_model(model, device, dl_train, dl_val, training_kwargs, z_gt=None, x_v
 
             loss = method_specific_loss + classifier_loss + reg_loss
 
-            wandb.log({'loss': loss.detach().cpu().numpy(),
-                       'method_specific_loss': method_specific_loss.detach().cpu().numpy(),
-                       'classifier_loss': classifier_loss.detach().cpu().numpy(),
-                       'reg_loss': reg_loss.detach().cpu().numpy()})
+            wandb.log({'loss': loss.item(),
+                       'method_specific_loss': method_specific_loss.item(),
+                       'classifier_loss': classifier_loss.item(),
+                       'reg_loss': reg_loss.item()})
 
             optim.zero_grad()
             loss.backward()
