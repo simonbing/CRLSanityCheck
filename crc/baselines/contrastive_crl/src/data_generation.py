@@ -388,6 +388,10 @@ class ChamberDataset(Dataset):
                                    self.iv_data['image_file'].iloc[item])
         iv_sample = io.imread(iv_img_name)
 
+        # Normalize inputs
+        obs_sample = obs_sample / 255.0
+        iv_sample = iv_sample / 255.0
+
         if not self.eval:
             return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
                                    dtype=torch.float32), \

@@ -17,7 +17,7 @@ flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                                  'CausalRepresentationChambers/data/chamber_downloads',
                     'Root directory where data is saved.')
-flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth'], 'Dataset for training.')
+flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
 flags.DEFINE_string('experiment', None, 'Experiment for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 # Shared hyperparameters
