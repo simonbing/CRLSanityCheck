@@ -8,6 +8,7 @@ import numpy as np
 import torch
 
 from crc.baselines import EvalCMVAE, EvalContrastCRL
+from crc.baselines.contrastive_crl.src.evaluation import compute_mccs
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
 
 FLAGS = flags.FLAGS
@@ -53,8 +54,8 @@ class EvalApplication(object):
             G, G_hat = self.evaluator.get_adjacency_matrices(dataset_test)
             shd, shd_opt = compute_SHD(G, G_hat)
 
-            results['shd'] = shd
-            results['shd_opt'] = shd_opt
+            results['shd'] = float(shd)
+            results['shd_opt'] = float(shd_opt)
 
             print(f'SHD: {shd}')
             print(f'SHD_opt: {shd_opt}')
@@ -62,9 +63,13 @@ class EvalApplication(object):
             z, z_hat = self.evaluator.get_encodings(dataset_test)
             # TODO decide which one to keep
             # mcc1 = compute_MCC(z_hat, z)
+            z_pred_sign_matched = z_hat * np.sign(z_hat)[:, 0:1] * np.sign(z)[:, 0:1]
+            mccs = compute_mccs(z, z_hat)
+            mccs_sign_matched = compute_mccs(z, z_pred_sign_matched)
+            mccs_abs = compute_mccs(np.abs(z), np.abs(z_hat))
             mcc, _, _ = mean_corr_coef_np(z, z_hat)
 
-            results['mcc'] = mcc
+            results['mcc'] = float(mcc)
 
             print(f'MCC: {mcc}')
 
