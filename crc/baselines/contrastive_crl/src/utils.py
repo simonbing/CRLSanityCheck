@@ -90,6 +90,27 @@ def get_chamber_data(dataset, exp, data_root, seed):
         dataset_train = databag.get_datasets(mode='train')
         dataset_val = databag.get_datasets(mode='val')
         dataset_test = databag.get_datasets(mode='test')
+    elif dataset == 'contrast_img':
+        data_kwargs = {
+            'mixing': 'image',
+            'd': 4, # 2 balls
+            'k': 2,
+            'n': 25000,
+            'seed': seed,
+            # 'dim_x': 20,
+            # 'hidden_dim': 512,
+            # 'hidden_layers': 3,
+            'var_range_obs': (0.01, 0.02),
+            'var_range_int': (0.01, 0.02),
+            'mean_range': (0.1, 0.2),
+            'constrain_to_image': True,
+            'repeat_obs_samples': True
+        }
+        databag = get_data_from_kwargs(data_kwargs)
+
+        dataset_train = databag.get_datasets(mode='train')
+        dataset_val = databag.get_datasets(mode='val')
+        dataset_test = databag.get_datasets(mode='test')
     else:
         chamber_dataset = ChamberDataset(dataset=dataset, experiment=exp,
                                         data_root=data_root, eval=True)
