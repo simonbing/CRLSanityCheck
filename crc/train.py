@@ -44,7 +44,7 @@ class TrainApplication(object):
         self.lat_dim = lat_dim
         trainer = self._get_trainer()
         self.trainer = trainer(data_root=self.data_root, dataset=self.dataset,
-                               experiment=self.experiment,
+                               experiment=self.experiment, overwrite_data=self.overwrite_data,
                                model=self.model, run_name=self.run_name,
                                seed=self.seed, batch_size=self.batch_size,
                                epochs=self.epochs, lat_dim=self.lat_dim,

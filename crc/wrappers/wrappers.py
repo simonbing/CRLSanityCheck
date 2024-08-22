@@ -7,13 +7,14 @@ from crc.utils import get_device
 
 
 class TrainModel(ABC):
-    def __init__(self, data_root, dataset, experiment, model, seed, batch_size,
-                 epochs, lat_dim, run_name, root_dir):
+    def __init__(self, data_root, dataset, experiment, overwrite_data, model,
+                 seed, batch_size, epochs, lat_dim, run_name, root_dir):
         self.seed = seed
 
         self.data_root = data_root
         self.dataset = dataset
         self.experiment = experiment
+        self.overwrite_data = overwrite_data
         self.model = model
         self.run = run_name
 
