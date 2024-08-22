@@ -20,6 +20,7 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
 flags.DEFINE_string('experiment', None, 'Experiment for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
+flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
 # Shared hyperparameters
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('batch_size', 64, 'Batch size.')
@@ -29,13 +30,14 @@ flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
 
 class TrainApplication(object):
     def __init__(self, model, output_root, data_root, dataset, experiment,
-                 run_name, seed, batch_size, epochs, lat_dim):
+                 run_name, overwrite_data, seed, batch_size, epochs, lat_dim):
         self.model = model
         self.output_root = output_root
         self.data_root = data_root
         self.dataset = dataset
         self.experiment = experiment
         self.run_name = run_name
+        self.overwrite_data = overwrite_data
         self.seed = seed
         self.batch_size = batch_size
         self.epochs = epochs
@@ -95,6 +97,7 @@ def main(argv):
                                    dataset=FLAGS.dataset,
                                    experiment=FLAGS.experiment,
                                    run_name=run_name,
+                                   overwrite_data=FLAGS.overwrite_data,
                                    seed=FLAGS.seed,
                                    batch_size=FLAGS.batch_size,
                                    epochs=FLAGS.epochs,
