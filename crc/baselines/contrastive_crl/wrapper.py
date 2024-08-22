@@ -33,6 +33,7 @@ class TrainContrastCRL(TrainModel):
         """
         device = get_device()
         print(f'using device: {device}')
+        print(f'train dir: {self.train_dir}')
 
         # Get data
         dataset_train, dataset_val, dataset_test = get_chamber_data(dataset=self.dataset,
