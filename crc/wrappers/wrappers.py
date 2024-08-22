@@ -22,9 +22,7 @@ class TrainModel(ABC):
                                       self.model)
         self.train_dir = os.path.join(self.model_dir, self.run,
                                       f'seed_{self.seed}', 'train')
-        print(f'train dir: {self.train_dir}')
         if not os.path.exists(self.train_dir):
-            print(f'creating train dir: {self.train_dir}')
             os.makedirs(self.train_dir)
 
         # Shared training hyperparameters
