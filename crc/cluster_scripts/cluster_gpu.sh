@@ -10,7 +10,7 @@
 #SBATCH --mem=0
 
 # Activate environment
-sourcce ~/.bashrc
+source ~/.bashrc
 source activate crc
 
 "$@"
