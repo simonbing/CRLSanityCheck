@@ -2,6 +2,7 @@
 
 # Run jobs on GPU node
 #SBATCH --partition=gpu
+#SBATCH --gpus=1
 
 #SBATCH --account=bd1083
 #SBATCH --output=logs/slurm-%j.out
