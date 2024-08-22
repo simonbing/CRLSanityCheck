@@ -27,8 +27,10 @@ class EvalApplication(object):
         self.seed = seed
         self.model = model
         self.model_dir = os.path.join(root_dir, dataset, experiment, self.model)
-        self.train_dir = os.path.join(self.model_dir, run_name, 'train')
-        self.eval_dir = os.path.join(self.model_dir, run_name, 'eval')
+        self.train_dir = os.path.join(self.model_dir, run_name,
+                                      f'seed_{self.seed}', 'train')
+        self.eval_dir = os.path.join(self.model_dir, run_name,
+                                     f'seed_{self.seed}', 'eval')
         if not os.path.exists(self.eval_dir):
             os.makedirs(self.eval_dir)
 
