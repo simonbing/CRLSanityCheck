@@ -64,7 +64,7 @@ class EvalApplication(object):
             # mcc1 = compute_MCC(z_hat, z)
             print(z.shape, z_hat.shape)
             # Hack
-            sys.setrecursionlimit(3000)
+            # sys.setrecursionlimit(3000)
             z_pred_sign_matched = z_hat * np.sign(z_hat)[:, 0:1] * np.sign(z)[:, 0:1]
             # mccs = compute_mccs(z, z_hat)
             # mccs_sign_matched = compute_mccs(z, z_pred_sign_matched)
