@@ -8,7 +8,6 @@
 #SBATCH --output=logs/slurm-%j.out
 #SBATCH --time=08:00:00
 #SBATCH --nodes=1
-#SBATCH --mem=0
 
 # Activate environment
 source ~/.bashrc
