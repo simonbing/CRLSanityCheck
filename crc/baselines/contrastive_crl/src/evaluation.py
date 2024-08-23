@@ -110,7 +110,7 @@ def evaluate_graph_metrics(W_true, W, thresh=.3, nr_edges=1):
 
 def get_edge_threshold(W, nr_edges):
     W_abs = np.abs(W).reshape(-1)
-    return W_abs[np.argsort(W_abs)[-nr_edges]]
+    return W_abs[np.argsort(W_abs)[-(nr_edges+1)]]
 
 def get_auroc(B_true, W):
     W_abs = np.abs(W)

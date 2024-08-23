@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from crc.baselines import EvalCMVAE, EvalContrastCRL
-from crc.baselines.contrastive_crl.src.evaluation import compute_mccs
+from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
 
 FLAGS = flags.FLAGS
@@ -52,15 +52,6 @@ class EvalApplication(object):
 
         # Evaluate all metrics
         results = {}
-        if 'SHD' in self.metrics:
-            G, G_hat = self.evaluator.get_adjacency_matrices(dataset_test)
-            shd, shd_opt = compute_SHD(G, G_hat)
-
-            results['shd'] = float(shd)
-            results['shd_opt'] = float(shd_opt)
-
-            print(f'SHD: {shd}')
-            print(f'SHD_opt: {shd_opt}')
         if 'MCC' in self.metrics:
             z, z_hat = self.evaluator.get_encodings(dataset_test)
             # TODO decide which one to keep
@@ -69,11 +60,36 @@ class EvalApplication(object):
             mccs = compute_mccs(z, z_hat)
             mccs_sign_matched = compute_mccs(z, z_pred_sign_matched)
             mccs_abs = compute_mccs(np.abs(z), np.abs(z_hat))
-            mcc, _, _ = mean_corr_coef_np(z, z_hat)
+            mcc, _, permutation = mean_corr_coef_np(z, z_hat)
 
             results['mcc'] = float(mcc)
 
             print(f'MCC: {mcc}')
+        if 'SHD' in self.metrics:
+            G, G_hat = self.evaluator.get_adjacency_matrices(dataset_test)
+
+            nr_edges = np.count_nonzero(G)
+            shd_dict = evaluate_graph_metrics(G, G_hat, nr_edges=nr_edges)
+
+            print(f"SHD: {shd_dict['SHD']}")
+            print(f"SHD_opt: {shd_dict['SHD_opt']}")
+            print(f"SHD_edge_matched: {shd_dict['SHD_edge_matched']}")
+
+            try: # Compute SHD with permutation from MCC
+                G_hat_perm = G_hat[permutation[1], :][:, permutation[1]]
+                shd_dict_perm = evaluate_graph_metrics(G, G_hat_perm, nr_edges=nr_edges)
+
+                print(f"SHD perm: {shd_dict_perm['SHD']}")
+                print(f"SHD_opt: {shd_dict_perm['SHD_opt']}")
+                print(f"SHD_edge_matched_perm: {shd_dict_perm['SHD_edge_matched']}")
+
+                shd_dict['SHD_perm'] = shd_dict_perm['SHD']
+                shd_dict['SHD_opt_perm'] = shd_dict_perm['SHD_opt']
+                shd_dict['SHD_edge_matched_perm'] = shd_dict_perm['SHD_edge_matched']
+            except UnboundLocalError:
+                pass
+
+            results = results | shd_dict
 
         # Save results
         with open(os.path.join(self.eval_dir, 'results.json'), 'w') as f:
