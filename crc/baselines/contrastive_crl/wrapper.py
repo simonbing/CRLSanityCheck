@@ -45,17 +45,26 @@ class TrainContrastCRL(TrainModel):
         dl_val = DataLoader(dataset_val, shuffle=False, batch_size=self.batch_size)
 
         # Save train data (as torch dataset)
-        train_data_path = os.path.join(self.model_dir, 'train_dataset.pkl')
+        if self.dataset == 'contrast_synth':
+            train_data_path = os.path.join(self.model_dir, f'train_dataset_seed_{self.seed}.pkl')
+        else:
+            train_data_path = os.path.join(self.model_dir, 'train_dataset.pkl')
         if not os.path.exists(train_data_path) or self.overwrite_data:
             with open(train_data_path, 'wb') as f:
                 pickle.dump(dataset_train, f, protocol=pickle.HIGHEST_PROTOCOL)
         # Save val data
-        val_data_path = os.path.join(self.model_dir, 'val_dataset.pkl')
+        if self.dataset == 'contrast_synth':
+            val_data_path = os.path.join(self.model_dir, f'val_dataset_seed_{self.seed}.pkl')
+        else:
+            val_data_path = os.path.join(self.model_dir, 'val_dataset.pkl')
         if not os.path.exists(val_data_path)  or self.overwrite_data:
             with open(val_data_path, 'wb') as f:
                 pickle.dump(dataset_val, f, protocol=pickle.HIGHEST_PROTOCOL)
         # Save test data
-        test_data_path = os.path.join(self.model_dir, 'test_dataset.pkl')
+        if self.dataset == 'contrast_synth':
+            test_data_path = os.path.join(self.model_dir, f'test_dataset_seed_{self.seed}.pkl')
+        else:
+            test_data_path = os.path.join(self.model_dir, 'test_dataset.pkl')
         if not os.path.exists(test_data_path)  or self.overwrite_data:
             with open(test_data_path, 'wb') as f:
                 pickle.dump(dataset_test, f, protocol=pickle.HIGHEST_PROTOCOL)

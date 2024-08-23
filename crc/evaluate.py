@@ -10,6 +10,7 @@ import torch
 from crc.baselines import EvalCMVAE, EvalContrastCRL
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
+from crc.utils import NpEncoder
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
@@ -26,6 +27,7 @@ class EvalApplication(object):
     def __init__(self, seed, model, root_dir, dataset, experiment, run_name, metrics):
         self.seed = seed
         self.model = model
+        self.dataset = dataset
         self.model_dir = os.path.join(root_dir, dataset, experiment, self.model)
         self.train_dir = os.path.join(self.model_dir, run_name,
                                       f'seed_{self.seed}', 'train')
@@ -46,7 +48,10 @@ class EvalApplication(object):
         random.seed(self.seed)
 
         # Load test data (all ground truth info should be here!)
-        dataset_test_path = os.path.join(self.model_dir, 'test_dataset.pkl')
+        if self.dataset.endswith('synth'):
+            dataset_test_path = os.path.join(self.model_dir, f'test_dataset_seed_{self.seed}.pkl')
+        else:
+            dataset_test_path = os.path.join(self.model_dir, 'test_dataset.pkl')
         with open(dataset_test_path, 'rb') as f:
             dataset_test = pickle.load(f)
 
@@ -93,7 +98,7 @@ class EvalApplication(object):
 
         # Save results
         with open(os.path.join(self.eval_dir, 'results.json'), 'w') as f:
-            json.dump(results, f, indent=4)
+            json.dump(results, f, indent=4, cls=NpEncoder)
 
     def _get_evaluator(self):
         if self.model == 'cmvae':
