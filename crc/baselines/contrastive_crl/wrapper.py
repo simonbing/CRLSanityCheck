@@ -115,7 +115,7 @@ class EvalContrastCRL(EvalModel):
             G = dataset_test.dataset.W
         G_hat = self.trained_model.parametric_part.A.t().cpu().detach().numpy()
 
-        return G, G_hat
+        return np.asarray(G, dtype=np.float32), np.asarray(G_hat, dtype=np.float32)
 
     def get_encodings(self, dataset_test):
         self.trained_model.eval()
