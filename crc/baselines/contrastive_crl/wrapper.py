@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
@@ -141,7 +142,9 @@ class EvalContrastCRL(EvalModel):
                 z_list.append(z_obs)
                 z_hat_list.append(z_hat_batch)
 
-            z_gt = torch.cat(z_list).cpu().detach().numpy()
-            z_hat = torch.cat(z_hat_list).cpu().detach().numpy()
+            z_gt = np.asarray(torch.cat(z_list).cpu().detach().numpy(),
+                              dtype=np.float32)
+            z_hat = np.asarray(torch.cat(z_hat_list).cpu().detach().numpy(),
+                               dtype=np.float32)
 
         return z_gt, z_hat
