@@ -4,9 +4,10 @@ import time
 from absl import flags, app
 import wandb
 
-from crc.apps import TrainApplication
+from crc.apps import TrainApplication, EvalApplication
 
 FLAGS = flags.FLAGS
+
 flags.DEFINE_enum('model', None, ['cmvae', 'contrast_crl'], 'Model to train.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',
@@ -18,11 +19,14 @@ flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth', 'contrast_
 flags.DEFINE_string('experiment', None, 'Experiment for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
+
 # Shared hyperparameters
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('batch_size', 64, 'Batch size.')
 flags.DEFINE_integer('epochs', 100, 'Training epochs.')
 flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
+
+flags.DEFINE_list('metrics', None, 'Evaluation metrics to calculate.')
 
 
 def main(argv):
@@ -51,18 +55,29 @@ def main(argv):
         config=wandb_config
     )
 
-    application = TrainApplication(model=FLAGS.model,
-                                   output_root=FLAGS.output_root,
-                                   data_root=FLAGS.data_root,
-                                   dataset=FLAGS.dataset,
-                                   experiment=FLAGS.experiment,
-                                   run_name=run_name,
-                                   overwrite_data=FLAGS.overwrite_data,
-                                   seed=FLAGS.seed,
-                                   batch_size=FLAGS.batch_size,
-                                   epochs=FLAGS.epochs,
-                                   lat_dim=FLAGS.lat_dim)
-    application.run()
+    train_app = TrainApplication(model=FLAGS.model,
+                                 output_root=FLAGS.output_root,
+                                 data_root=FLAGS.data_root,
+                                 dataset=FLAGS.dataset,
+                                 experiment=FLAGS.experiment,
+                                 run_name=run_name,
+                                 overwrite_data=FLAGS.overwrite_data,
+                                 seed=FLAGS.seed,
+                                 batch_size=FLAGS.batch_size,
+                                 epochs=FLAGS.epochs,
+                                 lat_dim=FLAGS.lat_dim)
+
+    train_app.run()
+
+    eval_app = EvalApplication(seed=FLAGS.seed,
+                               model=FLAGS.model,
+                               root_dir=FLAGS.output_root,
+                               dataset=FLAGS.dataset,
+                               experiment=FLAGS.experiment,
+                               run_name=FLAGS.run_name,
+                               metrics=FLAGS.metrics)
+
+    eval_app.run()
 
 
 if __name__ == '__main__':
