@@ -5,6 +5,7 @@ import torch
 
 from crc.baselines import TrainCMVAE, TrainContrastCRL
 
+
 class TrainApplication(object):
     def __init__(self, model, output_root, data_root, dataset, experiment,
                  run_name, overwrite_data, seed, batch_size, epochs, lat_dim):
