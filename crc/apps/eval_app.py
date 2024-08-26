@@ -5,6 +5,7 @@ import random
 
 import numpy as np
 import torch
+import wandb
 
 from crc.baselines import EvalCMVAE, EvalContrastCRL
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
@@ -84,6 +85,10 @@ class EvalApplication(object):
                 pass
 
             results = results | shd_dict
+
+        # Log to wandb summary
+        for key in results:
+            wandb.run.summary[key] = results[key]
 
         # Save results
         with open(os.path.join(self.eval_dir, 'results.json'), 'w') as f:
