@@ -86,7 +86,7 @@ class EvalApplication(object):
                 shd_dict_perm = evaluate_graph_metrics(G, G_hat_perm, nr_edges=nr_edges)
 
                 print(f"SHD perm: {shd_dict_perm['SHD']}")
-                print(f"SHD_opt: {shd_dict_perm['SHD_opt']}")
+                print(f"SHD_opt_perm: {shd_dict_perm['SHD_opt']}")
                 print(f"SHD_edge_matched_perm: {shd_dict_perm['SHD_edge_matched']}")
 
                 shd_dict['SHD_perm'] = shd_dict_perm['SHD']
