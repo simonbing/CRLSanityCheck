@@ -297,7 +297,7 @@ class ContrastiveCRLDataset(Dataset):
         self.z_obs = torch.tensor(z_obs, dtype=torch.float)
         self.z_int = torch.tensor(z_int, dtype=torch.float)
         self.f = f
-        self.t = torch.tensor(t)
+        self.t = torch.tensor(t, dtype=torch.int)
         self.W = W
         self.transform = transforms.Compose([f])
 
