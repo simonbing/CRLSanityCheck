@@ -58,6 +58,8 @@ class EvalApplication(object):
             mcc, _, permutation = mean_corr_coef_np(z, z_hat)
 
             results['mcc'] = float(mcc)
+            results['mcc_w_in'] = mccs['mcc_w_in']
+            results['mcc_w_out'] = mccs['mcc_w_out']
 
             print(f'MCC: {mcc}')
 
