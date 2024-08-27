@@ -147,9 +147,8 @@ class EvalContrastCRL(EvalModel):
                 z_list.append(z_obs)
                 z_hat_list.append(z_hat_batch)
 
-            z_gt = np.asarray(torch.cat(z_list).cpu().detach().numpy(),
-                              dtype=np.float32)
-            z_hat = np.asarray(torch.cat(z_hat_list).cpu().detach().numpy(),
-                               dtype=np.float32)
+            z_gt = torch.cat(z_list).cpu().detach().numpy()
+            z_hat = torch.cat(z_hat_list).cpu().detach().numpy()
 
-        return z_gt, z_hat
+        return np.asarray(z_gt, dtype=np.float32), \
+            np.asarray(z_hat, dtype=np.float32)
