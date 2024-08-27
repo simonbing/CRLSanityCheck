@@ -33,9 +33,9 @@ class TrainContrastCRL(TrainModel):
         from Interventions under General Nonlinear Mixing".
         """
         # Check if trained model already exists, skip training if so
-        if os.path.exists(os.path.join(self.train_dir, 'best_model.pt')):
-            print('Trained model found, skipping training!')
-            return
+        # if os.path.exists(os.path.join(self.train_dir, 'best_model.pt')):
+        #     print('Trained model found, skipping training!')
+        #     return
 
         device = get_device()
         print(f'using device: {device}')
