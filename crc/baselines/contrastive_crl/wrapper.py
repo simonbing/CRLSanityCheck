@@ -75,6 +75,10 @@ class TrainContrastCRL(TrainModel):
             with open(test_data_path, 'wb') as f:
                 pickle.dump(dataset_test, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+        ######## HACK #########
+        return
+        #######################
+
         # Build model
         model = self._get_model()
 
