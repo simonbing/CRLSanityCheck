@@ -33,9 +33,9 @@ class TrainContrastCRL(TrainModel):
         from Interventions under General Nonlinear Mixing".
         """
         # Check if trained model already exists, skip training if so
-        # if os.path.exists(os.path.join(self.train_dir, 'best_model.pt')):
-        #     print('Trained model found, skipping training!')
-        #     return
+        if os.path.exists(os.path.join(self.train_dir, 'best_model.pt')):
+            print('Trained model found, skipping training!')
+            return
 
         device = get_device()
         print(f'using device: {device}')
@@ -75,10 +75,6 @@ class TrainContrastCRL(TrainModel):
             with open(test_data_path, 'wb') as f:
                 pickle.dump(dataset_test, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        ######## HACK #########
-        return
-        #######################
-
         # Build model
         model = self._get_model()
 
@@ -91,10 +87,10 @@ class TrainContrastCRL(TrainModel):
         training_kwargs = {
             'epochs': self.epochs,
             'optimizer_name': 'adam',
-            'mu': 10e-5,
-            'eta': 10e-4,
+            'mu': 0.00001,
+            'eta': 0.0001,
             'kappa': 0.1,
-            'lr_nonparametric': 5*10e-4,
+            'lr_nonparametric': 0.0005,
             'weight_decay': 0.0
         }
 
@@ -134,8 +130,6 @@ class EvalContrastCRL(EvalModel):
             x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
 
             z_hat = self.trained_model.get_z(x_gt).cpu().detach().numpy()
-
-            print(z_gt.shape)
         else:
             dataloader_test = DataLoader(dataset_test, shuffle=False)
 
