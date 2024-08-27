@@ -66,8 +66,11 @@ class DataBag:
         self.lganm = sempler.LGANM(self.W, np.zeros(d), self.var_obs)
         self.obs, self.int, self.targets = self.sample(self.train_samples, repeat_obs_samples)
         self.obs_val, self.int_val, self.targets_val = self.sample(self.val_samples, repeat_obs_samples)
-        self.obs_test, self.int_test, self.targets_test = self.sample(self.test_samples,
-                                                                      repeat_obs_samples=False)
+        obs_test, int_test, targets_test = self.sample(self.test_samples,
+                                                       repeat_obs_samples=False)
+        self.obs_test = obs_test[:self.test_samples]
+        self.int_test = int_test[:self.test_samples]
+        self.targets_test = targets_test[:self.test_samples]
         self.obs_f, self.int_f, self.obs_f_val, self.int_f_val = self.get_observations_cached()
 
     @staticmethod
