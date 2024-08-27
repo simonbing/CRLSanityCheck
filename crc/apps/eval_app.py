@@ -52,14 +52,19 @@ class EvalApplication(object):
             # TODO decide which one to keep
             # mcc1 = compute_MCC(z_hat, z)
             z_pred_sign_matched = z_hat * np.sign(z_hat)[:, 0:1] * np.sign(z)[:, 0:1]
-            # mccs = compute_mccs(z, z_hat)
-            # mccs_sign_matched = compute_mccs(z, z_pred_sign_matched)
-            # mccs_abs = compute_mccs(np.abs(z), np.abs(z_hat))
+            mccs = compute_mccs(z, z_hat)
+            mccs_sign_matched = compute_mccs(z, z_pred_sign_matched)
+            mccs_abs = compute_mccs(np.abs(z), np.abs(z_hat))
             mcc, _, permutation = mean_corr_coef_np(z, z_hat)
 
             results['mcc'] = float(mcc)
 
             print(f'MCC: {mcc}')
+
+            print('Alternative MCC scores:')
+            print(mccs)
+            print(mccs_sign_matched)
+            print(mccs_abs)
         if 'SHD' in self.metrics:
             G, G_hat = self.evaluator.get_adjacency_matrices(dataset_test)
 
