@@ -130,6 +130,8 @@ class EvalContrastCRL(EvalModel):
             x_gt = dataset_test.f(torch.tensor(z_gt, dtype=torch.float)).to(self.device)
 
             z_hat = self.trained_model.get_z(x_gt).cpu().detach().numpy()
+
+            print(z_gt.shape)
         else:
             dataloader_test = DataLoader(dataset_test, shuffle=False)
 
