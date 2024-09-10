@@ -6,7 +6,7 @@
 
 #SBATCH --account=bd1083
 #SBATCH --output=logs/slurm-%j.out
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 #SBATCH --nodes=1
 
 # Activate environment
