@@ -118,9 +118,9 @@ def get_chamber_data(dataset, exp, data_root, seed):
         d = chamber_dataset.W.shape[0]
         n_per_env = int(len(chamber_dataset)/d)
 
-        train_frac = 2/3
-        val_frac = 1/6
-        test_frac = 1/6
+        train_frac = 0.8
+        val_frac = 0.1
+        test_frac = 0.1
 
         n_train = int(n_per_env * train_frac)
         n_val = int(n_per_env * val_frac)
