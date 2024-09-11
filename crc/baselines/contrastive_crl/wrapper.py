@@ -63,7 +63,7 @@ class TrainContrastCRL(TrainModel):
             val_data_path = os.path.join(self.model_dir, f'val_dataset_seed_{self.seed}.pkl')
         else:
             val_data_path = os.path.join(self.model_dir, 'val_dataset.pkl')
-        if not os.path.exists(val_data_path)  or self.overwrite_data:
+        if not os.path.exists(val_data_path) or self.overwrite_data:
             with open(val_data_path, 'wb') as f:
                 pickle.dump(dataset_val, f, protocol=pickle.HIGHEST_PROTOCOL)
         # Save test data
@@ -71,7 +71,7 @@ class TrainContrastCRL(TrainModel):
             test_data_path = os.path.join(self.model_dir, f'test_dataset_seed_{self.seed}.pkl')
         else:
             test_data_path = os.path.join(self.model_dir, 'test_dataset.pkl')
-        if not os.path.exists(test_data_path)  or self.overwrite_data:
+        if not os.path.exists(test_data_path) or self.overwrite_data:
             with open(test_data_path, 'wb') as f:
                 pickle.dump(dataset_test, f, protocol=pickle.HIGHEST_PROTOCOL)
 
