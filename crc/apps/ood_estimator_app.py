@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 
-from crc.ood_estimation import OLSOODEstimator, get_chamber_data
+from crc.ood_estimation import get_chamber_data, OLSOODEstimator, LassoOODEstimator
 
 
 class OODEstimatorApplication(object):
@@ -17,6 +17,9 @@ class OODEstimatorApplication(object):
         if estimation_model == 'ols':
             return OLSOODEstimator(seed=self.seed, task=self.task,
                                    data_root=self.data_root)
+        elif estimation_model == 'lasso':
+            return LassoOODEstimator(seed=self.seed, task=self.task,
+                                     data_root=self.data_root)
 
     def run(self):
         # Set all seeds

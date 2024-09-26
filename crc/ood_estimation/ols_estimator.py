@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.model_selection import train_test_split
 
 from crc.ood_estimation.base_estimator import OODEstimator
@@ -35,3 +35,10 @@ class OLSOODEstimator(OODEstimator):
         y_hat = self.model.predict(X_ood)
 
         return y_hat
+
+
+class LassoOODEstimator(OLSOODEstimator):
+    def __init__(self, seed, task, data_root):
+        super().__init__(seed, task, data_root)
+
+        self.model = Lasso(alpha=0.1)  # alpha value hardcoded for now
