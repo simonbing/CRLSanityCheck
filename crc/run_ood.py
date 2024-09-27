@@ -21,6 +21,9 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 
 flags.DEFINE_integer('seed', 0, 'Random seed.')
+flags.DEFINE_integer('batch_size', 256, 'Batch size.')
+flags.DEFINE_integer('epochs', 100, 'Training epochs.')
+flags.DEFINE_float('learning_rate', 0.001, 'Learning rate.')
 
 
 def main(argv):
@@ -49,7 +52,10 @@ def main(argv):
     ood_app = OODEstimatorApplication(seed=FLAGS.seed,
                                       estimation_model=FLAGS.estimation_model,
                                       task=FLAGS.task,
-                                      data_root=FLAGS.data_root)
+                                      data_root=FLAGS.data_root,
+                                      epochs=FLAGS.epochs,
+                                      learning_rate=FLAGS.learning_rate,
+                                      batch_size=FLAGS.batch_size)
 
     ood_app.run()
 

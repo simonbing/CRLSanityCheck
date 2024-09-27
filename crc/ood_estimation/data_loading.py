@@ -22,7 +22,7 @@ def get_chamber_data(task, data_root):
         y_df_list_id = []
         for env in envs_list_id:
             env_df = chamber_data.get_experiment(name=f'scm_2_{env}').as_pandas_dataframe()
-            env_df['image_file'] =[f'{env}/{item}' for item in env_df['image_file']]
+            env_df['image_file'] =[f'lt_camera_v1/scm_2_{env}/images_64/{item}' for item in env_df['image_file']]
 
             df_list_id.append(env_df[features])
             y_df_list_id.append(env_df[target])
@@ -30,7 +30,7 @@ def get_chamber_data(task, data_root):
         # Out-of-distribution test environment
         env_ood = 'pol_2'
         df_ood = chamber_data.get_experiment(name=f'scm_2_{env_ood}').as_pandas_dataframe()
-        df_ood['image_file'] = [f'{env_ood}/{item}' for item in df_ood['image_file']]
+        df_ood['image_file'] = [f'lt_camera_v1/scm_2_{env_ood}/images_64/{item}' for item in df_ood['image_file']]
 
     X_df_train = pd.concat(df_list_id)
     y_train = pd.concat(y_df_list_id).to_numpy()

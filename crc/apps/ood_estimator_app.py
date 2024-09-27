@@ -3,14 +3,22 @@ import random
 import numpy as np
 import torch
 
-from crc.ood_estimation import get_chamber_data, OLSOODEstimator, LassoOODEstimator
+from crc.ood_estimation import get_chamber_data, OLSOODEstimator, \
+    LassoOODEstimator, MLPOODEstimator
 
 
 class OODEstimatorApplication(object):
-    def __init__(self, seed, estimation_model, task, data_root):
+    def __init__(self, seed, estimation_model, task, data_root, epochs,
+                 batch_size, learning_rate):
         self.seed = seed
         self.task = task  # encodes which environments to train and test on
         self.data_root = data_root
+
+        # NN training params
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+
         self.estimator = self._get_estimator(estimation_model)
 
     def _get_estimator(self, estimation_model):
@@ -20,6 +28,13 @@ class OODEstimatorApplication(object):
         elif estimation_model == 'lasso':
             return LassoOODEstimator(seed=self.seed, task=self.task,
                                      data_root=self.data_root)
+        elif estimation_model == 'mlp':
+            return MLPOODEstimator(seed=self.seed,
+                                   task=self.task,
+                                   data_root=self.data_root,
+                                   epochs=self.epochs,
+                                   batch_size=self.batch_size,
+                                   learning_rate=self.learning_rate)
 
     def run(self):
         # Set all seeds
