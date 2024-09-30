@@ -88,9 +88,9 @@ class MLPOODEstimator(OODEstimator):
                     y_hat_batch = self.model(X_batch)
 
                     val_loss = loss_fn(y_hat_batch, y_batch)
-                    wandb.log({'val_loss': val_loss.item()})
 
                     epoch_val_loss += val_loss
+                wandb.log({'val_loss': epoch_val_loss.item()/len(val_loader)})
                 if epoch_val_loss < best_val_loss:
                     best_val_loss = epoch_val_loss
                     self.best_model = copy.deepcopy(self.model)

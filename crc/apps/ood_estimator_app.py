@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import torch
+import wandb
 
 from crc.ood_estimation import get_chamber_data, OLSOODEstimator, \
     LassoOODEstimator, MLPOODEstimator
@@ -54,6 +55,8 @@ class OODEstimatorApplication(object):
         y_hat = self.estimator.predict(X_df_test)
 
         mse_ood = np.mean((y_test - y_hat) ** 2)
+
+        wandb.run.summary['mse_ood'] = mse_ood
         a = 0
 
         # Compute held out test metrics
