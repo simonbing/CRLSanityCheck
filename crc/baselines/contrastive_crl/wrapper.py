@@ -42,7 +42,7 @@ class TrainContrastCRL(TrainModel):
 
         # Get data
         dataset_train, dataset_val, dataset_test = get_chamber_data(dataset=self.dataset,
-                                                                    exp=self.experiment,
+                                                                    task=self.task,
                                                                     data_root=self.data_root,
                                                                     seed=self.seed)
 

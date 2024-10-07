@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import wandb
 
-from crc.ood_estimation import get_chamber_data, OLSOODEstimator, \
+from crc.ood_estimation import get_ood_task_data, OLSOODEstimator, \
     LassoOODEstimator, MLPOODEstimator
 
 
@@ -45,8 +45,8 @@ class OODEstimatorApplication(object):
 
         # Get train/test data
         X_df_train, X_df_test, y_train, y_test = \
-            get_chamber_data(task=self.task,
-                             data_root=self.data_root)
+            get_ood_task_data(task=self.task,
+                              data_root=self.data_root)
 
         # Train estimator on training environments
         self.estimator.train(X_df_train, y_train)

@@ -7,19 +7,19 @@ from crc.utils import get_device
 
 
 class TrainModel(ABC):
-    def __init__(self, data_root, dataset, experiment, overwrite_data, model,
+    def __init__(self, data_root, dataset, task, overwrite_data, model,
                  seed, batch_size, epochs, lat_dim, run_name, root_dir):
         self.seed = seed
 
         self.data_root = data_root
         self.dataset = dataset
-        self.experiment = experiment
+        self.task = task
         self.overwrite_data = overwrite_data
         self.model = model
         self.run = run_name
 
         # This is where train/test data is saved
-        self.model_dir = os.path.join(root_dir, self.dataset, self.experiment,
+        self.model_dir = os.path.join(root_dir, self.dataset, self.task,
                                       self.model)
         self.train_dir = os.path.join(self.model_dir, self.run,
                                       f'seed_{self.seed}', 'train')

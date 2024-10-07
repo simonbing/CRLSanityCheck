@@ -67,7 +67,7 @@ def save_images(images, dir, filename):
         generated_image_pil.save(os.path.join(dir, '{}_{}.png'.format(filename, i)))
 
 
-def get_chamber_data(dataset, exp, data_root, seed):
+def get_chamber_data(dataset, task, data_root, seed):
     # For sanity checking contrastive CRL code
     if dataset == 'contrast_synth':
 
@@ -112,7 +112,7 @@ def get_chamber_data(dataset, exp, data_root, seed):
         dataset_val = databag.get_datasets(mode='val')
         dataset_test = databag.get_datasets(mode='test')
     else:
-        chamber_dataset = ChamberDataset(dataset=dataset, experiment=exp,
+        chamber_dataset = ChamberDataset(dataset=dataset, task=task,
                                         data_root=data_root, eval=True)
         # Split dataset into train, val, test
         d = chamber_dataset.W.shape[0]

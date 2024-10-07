@@ -16,7 +16,7 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                                  'CausalRepresentationChambers/data/chamber_downloads',
                     'Root directory where data is saved.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
-flags.DEFINE_string('experiment', None, 'Experiment for training.')
+flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
 
@@ -38,7 +38,7 @@ def main(argv):
     wandb_config = dict(
         model=FLAGS.model,
         dataset=FLAGS.dataset,
-        experiment=FLAGS.experiment,
+        task=FLAGS.task,
         run_name=run_name,
         seed=FLAGS.seed,
         batch_size=FLAGS.batch_size,
@@ -59,7 +59,7 @@ def main(argv):
                                  output_root=FLAGS.output_root,
                                  data_root=FLAGS.data_root,
                                  dataset=FLAGS.dataset,
-                                 experiment=FLAGS.experiment,
+                                 task=FLAGS.task,
                                  run_name=run_name,
                                  overwrite_data=FLAGS.overwrite_data,
                                  seed=FLAGS.seed,
@@ -73,7 +73,7 @@ def main(argv):
                                model=FLAGS.model,
                                root_dir=FLAGS.output_root,
                                dataset=FLAGS.dataset,
-                               experiment=FLAGS.experiment,
+                               task=FLAGS.task,
                                run_name=FLAGS.run_name,
                                metrics=FLAGS.metrics)
 

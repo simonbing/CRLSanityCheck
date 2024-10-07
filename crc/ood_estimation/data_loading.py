@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from causalchamber.datasets import Dataset as ChamberData
 
 
-def get_chamber_data(task, data_root):
+def get_ood_task_data(task, data_root):
     """
     Returns X as a pandas dataframe and y directly as np array.
     :param task:

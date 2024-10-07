@@ -14,6 +14,7 @@ import torchvision.transforms as transforms
 
 from crc.baselines.contrastive_crl.src.nonlinearities import Identity, Linear_Nonlinearity, ImageGenerator
 from crc.baselines.contrastive_crl.src.models import EmbeddingNet
+from crc.utils import get_task_environments
 
 from causalchamber.datasets import Dataset as ChamberData
 
@@ -316,7 +317,7 @@ class ContrastiveCRLDataset(Dataset):
 class ChamberDataset(Dataset):
     def __init__(self,
                  dataset,
-                 experiment,
+                 task,
                  data_root,
                  eval=False,
                  transform=None):
@@ -327,7 +328,7 @@ class ChamberDataset(Dataset):
 
         self.data_root = data_root
         self.chamber_data_name = dataset
-        self.exp = experiment
+        self.exp, self.env_list = get_task_environments(task)
         chamber_data = ChamberData(self.chamber_data_name, root=self.data_root,
                                    download=True)
 
