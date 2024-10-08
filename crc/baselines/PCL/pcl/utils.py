@@ -11,6 +11,10 @@ import tarfile
 from subfunc.showdata import *
 from subfunc.munkres import Munkres
 
+from causalchamber.datasets import Dataset as ChamberDataset
+
+from crc.utils import get_task_environments
+
 
 # =============================================================
 # =============================================================
@@ -102,3 +106,17 @@ def unzip(loadfile, unzipfolder, necessary_word='/storage'):
 
     if not os.path.exists(unzipfolder):
         raise ValueError
+
+
+def get_chamber_data_PCL(dataset, data_root, task):
+    exp, env_list = get_task_environments(task)
+
+    chamber_data = ChamberDataset(dataset, root=data_root, download=True)
+
+    data = chamber_data.get_experiment(name=f'{exp}_reference').as_pandas_dataframe()
+
+    features = ['red', 'green', 'blue', 'pol_1', 'pol_2']  # hardcoded for now
+
+    x_gt = data[features].to_numpy()
+
+
