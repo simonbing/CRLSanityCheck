@@ -51,12 +51,12 @@ class ChamberDataset(Dataset):
                                          self.data['image_file'].iloc[rand_item])
             img_rand_sample = io.imread(img_rand_path)
 
-            X = torch.as_tensor(np.concatenate((img_sample.transpose((2, 0, 1)),
-                                                img_tm1_sample.transpose((2, 0, 1))),
+            X = torch.as_tensor(np.concatenate((img_sample.flatten(),
+                                                img_tm1_sample.flatten()),
                                                axis=0),
                                 dtype=torch.float32)
-            X_perm = torch.as_tensor(np.concatenate((img_sample.transpose((2, 0, 1)),
-                                                     img_rand_sample.transpose((2, 0, 1))),
+            X_perm = torch.as_tensor(np.concatenate((img_sample.flatten(),
+                                                     img_rand_sample.flatten()),
                                                     axis=0),
                                      dtype=torch.float32)
 
@@ -64,4 +64,3 @@ class ChamberDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
-

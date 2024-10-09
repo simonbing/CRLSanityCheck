@@ -5,20 +5,25 @@ import torch
 import wandb
 
 from crc.ood_estimation import get_ood_task_data, OLSOODEstimator, \
-    LassoOODEstimator, MLPOODEstimator
+    LassoOODEstimator, MLPOODEstimator, CRLOODEstimator
 
 
 class OODEstimatorApplication(object):
-    def __init__(self, seed, estimation_model, task, data_root, epochs,
-                 batch_size, learning_rate):
+    def __init__(self, seed, estimation_model, dataset, task, data_root, results_root, lat_dim, epochs,
+                 batch_size, learning_rate, run_name):
         self.seed = seed
+        self.dataset = dataset
         self.task = task  # encodes which environments to train and test on
         self.data_root = data_root
+        self.results_root = results_root
 
         # NN training params
+        self.lat_dim = lat_dim
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
+
+        self.run_name = run_name
 
         self.estimator = self._get_estimator(estimation_model)
 
@@ -36,6 +41,17 @@ class OODEstimatorApplication(object):
                                    epochs=self.epochs,
                                    batch_size=self.batch_size,
                                    learning_rate=self.learning_rate)
+        elif estimation_model in ['pcl', 'cmvae', 'contrast_crl']:
+            return CRLOODEstimator(seed=self.seed,
+                                   dataset=self.dataset,
+                                   task=self.task,
+                                   data_root=self.data_root,
+                                   results_root=self.results_root,
+                                   lat_dim=self.lat_dim,
+                                   epochs=self.epochs,
+                                   batch_size=self.batch_size,
+                                   crl_model=estimation_model,
+                                   run_name=self.run_name)
 
     def run(self):
         # Set all seeds

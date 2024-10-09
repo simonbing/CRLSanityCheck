@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 
 
 class OODEstimator(ABC):
-    def __init__(self, seed, task, data_root):
+    def __init__(self, seed, task, data_root, results_root):
         self.seed = seed
         self.task = task
         self.data_root = data_root
+        self.results_root = results_root
 
         self.train_frac = 0.8  # hardcoding for now
 

@@ -10,8 +10,9 @@ from crc.apps import OODEstimatorApplication
 FLAGS = flags.FLAGS
 
 flags.DEFINE_enum('estimation_model', None, ['ols', 'lasso', 'mlp', 'cmvae',
-                                             'contrast_crl'], 'Estimator to train.')
-flags.DEFINE_enum('task', None, ['lt_1'], 'Prediction task.')
+                                             'contrast_crl', 'pcl'], 'Estimator to train.')
+flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
+flags.DEFINE_enum('task', None, ['lt_1', 'lt_pcl_1'], 'Prediction task.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
@@ -21,6 +22,7 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 
 flags.DEFINE_integer('seed', 0, 'Random seed.')
+flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
 flags.DEFINE_integer('batch_size', 256, 'Batch size.')
 flags.DEFINE_integer('epochs', 100, 'Training epochs.')
 flags.DEFINE_float('learning_rate', 0.001, 'Learning rate.')
@@ -51,11 +53,15 @@ def main(argv):
 
     ood_app = OODEstimatorApplication(seed=FLAGS.seed,
                                       estimation_model=FLAGS.estimation_model,
+                                      dataset=FLAGS.dataset,
                                       task=FLAGS.task,
                                       data_root=FLAGS.data_root,
+                                      results_root=FLAGS.output_root,
+                                      lat_dim=FLAGS.lat_dim,
                                       epochs=FLAGS.epochs,
                                       learning_rate=FLAGS.learning_rate,
-                                      batch_size=FLAGS.batch_size)
+                                      batch_size=FLAGS.batch_size,
+                                      run_name=FLAGS.run_name)
 
     ood_app.run()
 

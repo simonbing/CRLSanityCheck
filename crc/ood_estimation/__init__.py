@@ -1,3 +1,4 @@
 from crc.ood_estimation.ols_estimator import OLSOODEstimator, LassoOODEstimator
 from crc.ood_estimation.mlp_estimator import MLPOODEstimator
+from crc.ood_estimation.crl_estimator import CRLOODEstimator
 from crc.ood_estimation.data_loading import get_ood_task_data

@@ -22,7 +22,7 @@ def get_ood_task_data(task, data_root):
         y_df_list_id = []
         for env in envs_list_id:
             env_df = chamber_data.get_experiment(name=f'scm_2_{env}').as_pandas_dataframe()
-            env_df['image_file'] =[f'lt_camera_v1/scm_2_{env}/images_64/{item}' for item in env_df['image_file']]
+            env_df['image_file'] = [f'lt_camera_v1/scm_2_{env}/images_64/{item}' for item in env_df['image_file']]
 
             df_list_id.append(env_df[features])
             y_df_list_id.append(env_df[target])
@@ -31,6 +31,24 @@ def get_ood_task_data(task, data_root):
         env_ood = 'pol_2'
         df_ood = chamber_data.get_experiment(name=f'scm_2_{env_ood}').as_pandas_dataframe()
         df_ood['image_file'] = [f'lt_camera_v1/scm_2_{env_ood}/images_64/{item}' for item in df_ood['image_file']]
+
+    elif task == 'lt_pcl_1':
+        chamber_data = ChamberData(name='lt_camera_walks_v1', root=data_root, download=True)
+        features = ['red', 'green', 'blue', 'pol_1', 'pol_2', 'image_file']
+        target = 'ir_1'
+
+        # In-distribution training environment
+        env_id = 'ar_1_uniform_ref'
+        df_id = chamber_data.get_experiment(name=env_id).as_pandas_dataframe()
+        df_id['image_file'] = [f'lt_camera_walks_v1/{env_id}/images_64/{item}' for item in df_id['image_file']]
+
+        df_list_id = [df_id[features]]
+        y_df_list_id = [df_id[target]]
+
+        # Out-of-distribution test environment
+        env_ood = 'ar_1_uniform_pol_1_90'
+        df_ood = chamber_data.get_experiment(name=env_ood).as_pandas_dataframe()
+        df_ood['image_file'] = [f'lt_camera_walks_v1/{env_ood}/images_64/{item}' for item in df_ood['image_file']]
 
     X_df_train = pd.concat(df_list_id)
     y_train = pd.concat(y_df_list_id).to_numpy()
