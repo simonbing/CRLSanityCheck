@@ -8,14 +8,14 @@ from crc.apps import TrainApplication, EvalApplication
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_enum('model', None, ['cmvae', 'contrast_crl'], 'Model to train.')
+flags.DEFINE_enum('model', None, ['pcl', 'cmvae', 'contrast_crl'], 'Model to train.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
 flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                                  'CausalRepresentationChambers/data/chamber_downloads',
                     'Root directory where data is saved.')
-flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
+flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
@@ -25,6 +25,7 @@ flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('batch_size', 64, 'Batch size.')
 flags.DEFINE_integer('epochs', 100, 'Training epochs.')
 flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
+flags.DEFINE_float('learning_rate', 0.001, 'Learning rate.')
 
 flags.DEFINE_list('metrics', None, 'Evaluation metrics to calculate.')
 

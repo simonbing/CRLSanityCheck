@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import wandb
 
-from crc.baselines import EvalCMVAE, EvalContrastCRL
+from crc.baselines import EvalCMVAE, EvalContrastCRL, EvalPCL
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
 from crc.utils import NpEncoder
@@ -106,3 +106,5 @@ class EvalApplication(object):
             return EvalCMVAE
         elif self.model == 'contrast_crl':
             return EvalContrastCRL
+        elif self.model == 'pcl':
+            return EvalPCL

@@ -15,7 +15,7 @@ class TrainPCL(TrainModel):
     def train(self):
         # Get data
         dataset_train = ChamberDataset(dataset=self.dataset, data_root=self.data_root,
-                                       task=self.task)
+                                       task=self.task, whiten=False)
 
         dl_train = DataLoader(dataset_train, shuffle=True, batch_size=self.batch_size)
 
@@ -25,23 +25,27 @@ class TrainPCL(TrainModel):
             with open(train_data_path, 'wb') as f:
                 pickle.dump(dataset_train, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        # Training
-        train(data=None,
-              random_seed=self.seed,
-              list_hidden_nodes=None,
-              initial_learning_rate=None,
-              momentum=None,
-              max_steps=None,
-              decay_steps=None,
-              decay_factor=None,
-              batch_size=self.batch_size,
-              train_dir=None,
-              latent_dim=None,
-              ar_order=1,
-              weight_decay=None,
-              checkpoint_steps=None,
-              moving_average_decay=None,
-              summary_steps=None)
+        best_model_path = os.path.join(self.train_dir, 'best_model.pt')
+        if not os.path.exists(best_model_path):
+            # Training (only runs if saved model doesn't exist yet)
+            train(data=dl_train,
+                  epochs=self.epochs,
+                  random_seed=self.seed,
+                  list_hidden_nodes=[128, 128] + [self.lat_dim],
+                  initial_learning_rate=0.1,
+                  momentum=0.9,
+                  max_steps=None,
+                  decay_steps=max(1, int(self.epochs / 2)),
+                  decay_factor=0.1,
+                  batch_size=self.batch_size,
+                  train_dir=self.train_dir,
+                  in_dim=64*64*3,  # hardcoded for image data
+                  latent_dim=self.lat_dim,
+                  ar_order=1,
+                  weight_decay=1e-5,
+                  checkpoint_steps=2 * self.epochs,
+                  moving_average_decay=0.999,
+                  summary_steps=max(1, int(self.epochs / 10)))
 
 
 class EvalPCL(EvalModel):

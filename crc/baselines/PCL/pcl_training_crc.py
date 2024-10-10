@@ -106,7 +106,9 @@ class MainApplication(object):
               checkpoint_steps=2*max_steps,
               moving_average_decay=self.moving_average_decay,
               summary_steps=int(max_steps / 10),
-              random_seed=self.seed
+              random_seed=self.seed,
+              epochs=None,
+              in_dim=4
         )
 
         # Save model

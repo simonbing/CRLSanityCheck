@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 
 from crc.baselines.PCL.pcl import pcl
 from crc.baselines.PCL.subfunc.showdata import *
@@ -17,6 +18,7 @@ from crc.baselines.PCL.subfunc.showdata import *
 # =============================================================
 # =============================================================
 def train(data,
+          epochs,
           list_hidden_nodes,
           initial_learning_rate,
           momentum,
@@ -25,6 +27,7 @@ def train(data,
           decay_factor,
           batch_size,
           train_dir,
+          in_dim,
           latent_dim=4,
           ar_order=1,
           weight_decay=0,
@@ -61,7 +64,7 @@ def train(data,
         np.random.seed(random_seed)
         torch.manual_seed(random_seed)
 
-    num_data, in_dim = data.shape
+    # num_data, in_dim = data.shape
 
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
@@ -99,65 +102,77 @@ def train(data,
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         trained_step = checkpoint['step']
 
-    # training iteration
-    for step in range(trained_step, max_steps):
-        start_time = time.time()
+    for i in range(epochs):
+        # training iteration
+        for x, x_perm, y, y_perm in data:  # iterate over dataloader
+        # for step in range(trained_step, max_steps):
+            start_time = time.time()
 
-        # make shuffled batch
-        t_idx = np.random.choice(num_data - ar_order, batch_size) + ar_order
-        t_idx_ar = t_idx.reshape([-1, 1]) + np.arange(0, -ar_order - 1, -1).reshape([1, -1])
-        x_batch = data[t_idx_ar.reshape(-1), :].reshape([batch_size, ar_order + 1, -1])
+            # make shuffled batch
+            # t_idx = np.random.choice(num_data - ar_order, batch_size) + ar_order
+            # t_idx_ar = t_idx.reshape([-1, 1]) + np.arange(0, -ar_order - 1, -1).reshape([1, -1])
+            # x_batch = data[t_idx_ar.reshape(-1), :].reshape([batch_size, ar_order + 1, -1])
+            #
+            # xast_batch = x_batch.copy()
+            # for i in range(ar_order):
+            #     tast_idx = np.random.choice(num_data, batch_size)
+            #     xast_batch[:, i + 1, :] = data[tast_idx, :]
+            #
+            # x_torch = torch.from_numpy(np.concatenate([x_batch, xast_batch], axis=0).astype(np.float32)).to(device)
+            # y_torch = torch.cat([torch.ones([batch_size]), torch.zeros([batch_size])]).to(device)
 
-        xast_batch = x_batch.copy()
-        for i in range(ar_order):
-            tast_idx = np.random.choice(num_data, batch_size)
-            xast_batch[:, i + 1, :] = data[tast_idx, :]
+            x_torch = torch.cat((x, x_perm))
+            y_torch = torch.squeeze(torch.cat((y, y_perm)))
 
-        x_torch = torch.from_numpy(np.concatenate([x_batch, xast_batch], axis=0).astype(np.float32)).to(device)
-        y_torch = torch.cat([torch.ones([batch_size]), torch.zeros([batch_size])]).to(device)
+            x_torch = x_torch.to(device)
+            y_torch = y_torch.to(device)
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
+            # zero the parameter gradients
+            optimizer.zero_grad()
 
-        # forward + backward + optimize
-        logits, h = model(x_torch)
-        loss = criterion(logits, y_torch)
-        loss.backward()
-        optimizer.step()
+            # forward + backward + optimize
+            logits, h = model(x_torch)
+            loss = criterion(logits, y_torch)
+            loss.backward()
+            optimizer.step()
+
+            model.a.data = model.a.data.clamp(min=0)
+
+            # moving average of parameters
+            state_dict_n = model.state_dict()
+            for key in state_dict_ema:
+                state_dict_ema[key] = moving_average_decay * state_dict_ema[key] \
+                                      + (1.0 - moving_average_decay) * state_dict_n[key]
+
+            # accuracy
+            predicted = (logits > 0.5).float()
+            accu_val = (predicted == y_torch).sum().item()/(batch_size*2)
+            loss_val = loss.item()
+            lr = scheduler.get_last_lr()[0]
+            # wandb logging
+            wandb.log({'loss': loss.item(),
+                       'accuracy': accu_val})
+
+            duration = time.time() - start_time
+
+            assert not np.isnan(loss_val), 'Model diverged with loss = NaN'
+
+            # display stats
+            # if step % 100 == 0:
+            #     num_examples_per_step = batch_size
+            #     examples_per_sec = num_examples_per_step / duration
+            #     sec_per_batch = float(duration)
+            #     format_str = '%s: step %d, lr = %f, loss = %.2f, accuracy = %3.2f (%.1f examples/sec; %.3f sec/batch)'
+            #     print(format_str % (datetime.now(), step, lr, loss_val, accu_val * 100,
+            #                         examples_per_sec, sec_per_batch))
+
         scheduler.step()
 
-        model.a.data = model.a.data.clamp(min=0)
-
-        # moving average of parameters
-        state_dict_n = model.state_dict()
-        for key in state_dict_ema:
-            state_dict_ema[key] = moving_average_decay * state_dict_ema[key] \
-                                  + (1.0 - moving_average_decay) * state_dict_n[key]
-
-        # accuracy
-        predicted = (logits > 0.5).float()
-        accu_val = (predicted == y_torch).sum().item()/(batch_size*2)
-        loss_val = loss.item()
-        lr = scheduler.get_last_lr()[0]
-
-        duration = time.time() - start_time
-
-        assert not np.isnan(loss_val), 'Model diverged with loss = NaN'
-
-        # display stats
-        if step % 100 == 0:
-            num_examples_per_step = batch_size
-            examples_per_sec = num_examples_per_step / duration
-            sec_per_batch = float(duration)
-            format_str = '%s: step %d, lr = %f, loss = %.2f, accuracy = %3.2f (%.1f examples/sec; %.3f sec/batch)'
-            print(format_str % (datetime.now(), step, lr, loss_val, accu_val * 100,
-                                examples_per_sec, sec_per_batch))
-
         # save summary
-        if step % summary_steps == 0:
-            writer.add_scalar('scalar/lr', lr, step)
-            writer.add_scalar('scalar/loss', loss_val, step)
-            writer.add_scalar('scalar/accu', accu_val, step)
+        if i % summary_steps == 0:
+            writer.add_scalar('scalar/lr', lr, i)
+            writer.add_scalar('scalar/loss', loss_val, i)
+            writer.add_scalar('scalar/accu', accu_val, i)
             h_val = h.cpu().detach().numpy()
             h_comp = np.split(h_val, indices_or_sections=h.shape[1], axis=1)
             for (i, cm) in enumerate(h_comp):
@@ -166,9 +181,9 @@ def train(data,
                 writer.add_histogram('w/%s' % k, v)
 
         # save the model checkpoint periodically.
-        if step % checkpoint_steps == 0:
+        if i % checkpoint_steps == 0:
             checkpoint_path = os.path.join(train_dir, save_file)
-            torch.save({'step': step,
+            torch.save({'step': i,
                         'model_state_dict': model.state_dict(),
                         'ema_state_dict': state_dict_ema,
                         'optimizer_state_dict': optimizer.state_dict(),
@@ -182,3 +197,4 @@ def train(data,
                 'ema_state_dict': state_dict_ema,
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict()}, save_path)
+    torch.save(model, os.path.join(train_dir, 'best_model.pt'))
