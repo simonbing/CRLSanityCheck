@@ -1,4 +1,7 @@
+import os.path
+
 from sklearn.linear_model import LinearRegression
+import torch
 
 from crc.ood_estimation.base_estimator import OODEstimator
 from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
@@ -44,6 +47,13 @@ class CRLOODEstimator(OODEstimator):
         self.trainer.train()
 
         # Load trained embedding model
+        trained_model_path = os.path.join(self.trainer.train_dir, 'best_model.pt')
+        self.trained_crl_model = torch.load(trained_model_path)
+        # TODO: move model to device
+        # Get embeddings of training data the same way as in eval (maybe just reuse that function)
+        # but then how do we make sure it is not shuffled and fucks up the labels?
+        # -> dont shuffle in the dataloader!
+        # Use embeddings to train linear head
 
         # Train linear regression with embedding and labels
         self.lin_model.fit(Z_hat, y)
@@ -52,6 +62,11 @@ class CRLOODEstimator(OODEstimator):
         # Load trained model
 
         # Convert df into something the model can ingest (image loading) and ret
+        # Probably need to make a new dataset somewhere earlier (where we get the task)
+        # and save this for loading later... Maybe in the init of this app?
+        # Should be able to pass this task to the respective dataset building methods of each model...
+
+        # Then: embed from that dataset, predict using trained linear head
 
         y_hat = self.lin_model.predict(Z_ood)
         pass
