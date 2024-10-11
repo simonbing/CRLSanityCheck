@@ -174,16 +174,16 @@ def train(data,
         scheduler.step()
 
         # save summary
-        if i % summary_steps == 0:
-            writer.add_scalar('scalar/lr', lr, i)
-            writer.add_scalar('scalar/loss', loss_val, i)
-            writer.add_scalar('scalar/accu', accu_val, i)
-            h_val = h.cpu().detach().numpy()
-            h_comp = np.split(h_val, indices_or_sections=h.shape[1], axis=1)
-            for (i, cm) in enumerate(h_comp):
-                writer.add_histogram('h/h%d' % i, cm)
-            for k, v in state_dict_n.items():
-                writer.add_histogram('w/%s' % k, v)
+        # if i % summary_steps == 0:
+        #     writer.add_scalar('scalar/lr', lr, i)
+        #     writer.add_scalar('scalar/loss', loss_val, i)
+        #     writer.add_scalar('scalar/accu', accu_val, i)
+        #     h_val = h.cpu().detach().numpy()
+        #     h_comp = np.split(h_val, indices_or_sections=h.shape[1], axis=1)
+        #     for (i, cm) in enumerate(h_comp):
+        #         writer.add_histogram('h/h%d' % i, cm)
+        #     for k, v in state_dict_n.items():
+        #         writer.add_histogram('w/%s' % k, v)
 
         # save the model checkpoint periodically.
         if i % checkpoint_steps == 0:
