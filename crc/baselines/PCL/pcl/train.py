@@ -104,7 +104,7 @@ def train(data,
 
     for i in range(epochs):
         # training iteration
-        for x, x_perm, y, y_perm in data:  # iterate over dataloader
+        for batch_data in data:  # iterate over dataloader
         # for step in range(trained_step, max_steps):
             start_time = time.time()
 
@@ -120,6 +120,11 @@ def train(data,
             #
             # x_torch = torch.from_numpy(np.concatenate([x_batch, xast_batch], axis=0).astype(np.float32)).to(device)
             # y_torch = torch.cat([torch.ones([batch_size]), torch.zeros([batch_size])]).to(device)
+
+            x = batch_data[0]
+            x_perm = batch_data[1]
+            y = batch_data[2]
+            y_perm = batch_data[3]
 
             x_torch = torch.cat((x, x_perm))
             y_torch = torch.squeeze(torch.cat((y, y_perm)))

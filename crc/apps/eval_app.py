@@ -9,6 +9,7 @@ import wandb
 
 from crc.baselines import EvalCMVAE, EvalContrastCRL, EvalPCL
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
+from crc.baselines.PCL.pcl.utils import correlation
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
 from crc.utils import NpEncoder
 
@@ -49,6 +50,9 @@ class EvalApplication(object):
         results = {}
         if 'MCC' in self.metrics:
             z, z_hat = self.evaluator.get_encodings(dataset_test)
+            # Experimental PCL correlation
+            mcc_pcl_mat, _, _ = correlation(z_hat, z, 'Pearson')
+            mcc_pcl = np.mean(np.abs(np.diag(mcc_pcl_mat)))
             # TODO decide which one to keep
             # mcc1 = compute_MCC(z_hat, z)
             z_pred_sign_matched = z_hat * np.sign(z_hat)[:, 0:1] * np.sign(z)[:, 0:1]
@@ -60,6 +64,7 @@ class EvalApplication(object):
             results['mcc'] = float(mcc)
             results['mcc_w_in'] = mccs['mcc_w_in']
             results['mcc_w_out'] = mccs['mcc_w_out']
+            results['mcc_pcl'] = mcc_pcl
 
             print(f'MCC: {mcc}')
 

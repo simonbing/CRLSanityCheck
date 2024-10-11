@@ -80,7 +80,12 @@ class ChamberDataset(Dataset):
                                               axis=0),
                                      dtype=torch.float32)
 
-        return X, X_perm, torch.ones(1, dtype=torch.float32), torch.zeros(1, dtype=torch.float32)
+        Z = self.data[self.features].iloc[item].to_numpy()
+
+        return X, X_perm, \
+            torch.ones(1, dtype=torch.float32), \
+            torch.zeros(1, dtype=torch.float32), \
+            Z
 
     def __len__(self):
         return len(self.data)
