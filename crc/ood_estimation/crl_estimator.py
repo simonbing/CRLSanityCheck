@@ -1,10 +1,14 @@
-import os.path
+import logging
+import os
+import pickle
 
+import numpy as np
 from sklearn.linear_model import LinearRegression
 import torch
 
 from crc.ood_estimation.base_estimator import OODEstimator
 from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
+from crc.baselines import EvalPCL, EvalCMVAE, EvalContrastCRL
 
 
 class CRLOODEstimator(OODEstimator):
@@ -43,20 +47,49 @@ class CRLOODEstimator(OODEstimator):
         elif self.crl_model == 'pcl':
             return TrainPCL
 
+    def _get_evaluator(self):
+        if self.crl_model == 'cmvae':
+            return EvalCMVAE
+        elif self.crl_model == 'contrast_crl':
+            return EvalContrastCRL
+        elif self.crl_model == 'pcl':
+            return EvalPCL
+
     def train(self, X, y):
         self.trainer.train()
 
-        # Load trained embedding model
-        trained_model_path = os.path.join(self.trainer.train_dir, 'best_model.pt')
-        self.trained_crl_model = torch.load(trained_model_path)
-        # TODO: move model to device
+        # Get CRL evaluator
+        evaluator = self._get_evaluator()
+        self.evaluator = evaluator(trained_model_path=os.path.join(self.trainer.train_dir,
+                                                                   'best_model.pt'))
+
+        dataset_train_path = os.path.join(self.trainer.model_dir, 'train_dataset.pkl')
+        with open(dataset_train_path, 'rb') as f:
+            dataset_train = pickle.load(f)
+
+        _, z_hat_train = self.evaluator.get_encodings(dataset_train)
         # Get embeddings of training data the same way as in eval (maybe just reuse that function)
         # but then how do we make sure it is not shuffled and fucks up the labels?
         # -> dont shuffle in the dataloader!
+        num_train_samples = int(len(y) * self.train_frac)
+        y_train = y[:num_train_samples]
+        y_test = y[num_train_samples:]
+        assert len(y_train) == len(z_hat_train)
+
         # Use embeddings to train linear head
 
         # Train linear regression with embedding and labels
-        self.lin_model.fit(Z_hat, y)
+        self.lin_model.fit(z_hat_train[1:, :], y_train[1:, :])
+
+        # Get test dataset
+        dataset_test_path = os.path.join(self.trainer.model_dir, 'test_dataset.pkl')
+        with open(dataset_test_path, 'rb') as f:
+            dataset_test = pickle.load(f)
+        _, z_hat_test = self.evaluator.get_encodings(dataset_test)
+
+        y_hat_test = self.lin_model.predict(z_hat_test)
+        mse_id = np.mean((y_hat_test - y_test) ** 2)
+        logging.info(f'ID mse: {mse_id}')
 
     def predict(self, X_ood):
         # Load trained model
