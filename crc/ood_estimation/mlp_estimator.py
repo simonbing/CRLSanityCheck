@@ -1,4 +1,5 @@
 import copy
+import logging
 import os
 
 import numpy as np
@@ -94,6 +95,25 @@ class MLPOODEstimator(OODEstimator):
                 if epoch_val_loss < best_val_loss:
                     best_val_loss = epoch_val_loss
                     self.best_model = copy.deepcopy(self.model)
+
+        # Get in-distribution MSE
+        y_list = []
+        y_hat_list = []
+        self.model.eval()
+        for X_batch, y_batch in val_loader:
+            X_batch = X_batch.to(self.device)
+
+            y_hat_batch = self.model(X_batch)
+
+            y_list.append(y_batch.numpy())
+            y_hat_list.append(y_hat_batch.detach().cpu().numpy())
+
+        y_test = np.concatenate(y_list)
+        y_hat_test = np.concatenate(y_hat_list)
+        mse_id = np.mean((y_hat_test - y_test) ** 2)
+
+        logging.info(f'ID mse: {mse_id}')
+        wandb.run.summary['mse_id'] = mse_id
 
     def predict(self, X_ood):
         dataset = ChamberImageDataset(X_ood, None, self.data_root, mode='test')

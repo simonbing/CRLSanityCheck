@@ -3,6 +3,7 @@ import logging
 import numpy as np
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.model_selection import train_test_split
+import wandb
 
 from crc.ood_estimation.base_estimator import OODEstimator
 
@@ -27,6 +28,7 @@ class OLSOODEstimator(OODEstimator):
         y_hat = self.model.predict(X_val)
         mse_val = np.mean((y_val - y_hat) ** 2)
         logging.info(f'ID mse: {mse_val}')
+        wandb.run.summary['mse_id'] = mse_val
 
     def predict(self, X_ood):
         # Discard image info, convert directly to np array

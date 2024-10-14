@@ -4,7 +4,7 @@ import pickle
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
-import torch
+import wandb
 
 from crc.ood_estimation.base_estimator import OODEstimator
 from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
@@ -90,6 +90,7 @@ class CRLOODEstimator(OODEstimator):
         y_hat_test = self.lin_model.predict(z_hat_test)
         mse_id = np.mean((y_hat_test - y_test) ** 2)
         logging.info(f'ID mse: {mse_id}')
+        wandb.run.summary['mse_id'] = mse_id
 
     def predict(self, X_ood):
         # Load trained model
