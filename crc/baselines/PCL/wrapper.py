@@ -43,7 +43,7 @@ class TrainPCL(TrainModel):
             train(data=dl_train,
                   epochs=self.epochs,
                   random_seed=self.seed,
-                  list_hidden_nodes=[128, 128] + [self.lat_dim],
+                  list_hidden_nodes=[8, 8] + [self.lat_dim],
                   initial_learning_rate=0.1,
                   momentum=0.9,
                   max_steps=None,
@@ -51,7 +51,7 @@ class TrainPCL(TrainModel):
                   decay_factor=0.1,
                   batch_size=self.batch_size,
                   train_dir=self.train_dir,
-                  in_dim=64*64*3,  # hardcoded for image data
+                  in_dim=4,  # hardcoded for image data
                   latent_dim=self.lat_dim,
                   ar_order=1,
                   weight_decay=1e-5,

@@ -1,7 +1,7 @@
 """Data generation"""
 
 import numpy as np
-from subfunc.showdata import *
+from crc.baselines.PCL.subfunc.showdata import *
 
 
 # =============================================================

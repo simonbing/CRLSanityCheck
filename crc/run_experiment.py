@@ -15,7 +15,7 @@ flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                                  'CausalRepresentationChambers/data/chamber_downloads',
                     'Root directory where data is saved.')
-flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
+flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img', 'synth_pcl'], 'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')

@@ -9,6 +9,7 @@ import wandb
 from crc.ood_estimation.base_estimator import OODEstimator
 from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
 from crc.baselines import EvalPCL, EvalCMVAE, EvalContrastCRL
+from crc.baselines.PCL.pcl.dataset import ChamberDataset as PCLChamberDataset
 
 
 class CRLOODEstimator(OODEstimator):
@@ -58,6 +59,19 @@ class CRLOODEstimator(OODEstimator):
     def train(self, X, y):
         self.trainer.train()
 
+        # TODO:
+        # - get_embeding from evaluator will not work since dataloading does not
+        #   just take samples and encodes them, but often copies training samples
+        #   multiple times -> need simple dataset class that doesnt copy samples!
+        # - Define simple dataset that takes the pd df and returns the items. If
+        #   method needs special dataset class (PCL) define this and pass in init.
+        # - Extend each trained model class with a method that only encodes, given
+        #   a batch sample from the dataloader
+        # Should look like:
+        # x_batch from dataloader
+        # z_hat_batch = self.trained_model.encode(x_batch)
+        # z_hat = concat(z_hat_batch_list)
+
         # Get CRL evaluator
         evaluator = self._get_evaluator()
         self.evaluator = evaluator(trained_model_path=os.path.join(self.trainer.train_dir,
@@ -68,9 +82,7 @@ class CRLOODEstimator(OODEstimator):
             dataset_train = pickle.load(f)
 
         _, z_hat_train = self.evaluator.get_encodings(dataset_train)
-        # Get embeddings of training data the same way as in eval (maybe just reuse that function)
-        # but then how do we make sure it is not shuffled and fucks up the labels?
-        # -> dont shuffle in the dataloader!
+
         num_train_samples = int(len(y) * self.train_frac)
         y_train = y[:num_train_samples]
         y_test = y[num_train_samples:]
@@ -79,6 +91,7 @@ class CRLOODEstimator(OODEstimator):
         # Use embeddings to train linear head
 
         # Train linear regression with embedding and labels
+        # Discarding first sample because of PCL dataloader quirk
         self.lin_model.fit(z_hat_train[1:, :], y_train[1:, :])
 
         # Get test dataset
@@ -91,6 +104,14 @@ class CRLOODEstimator(OODEstimator):
         mse_id = np.mean((y_hat_test - y_test) ** 2)
         logging.info(f'ID mse: {mse_id}')
         wandb.run.summary['mse_id'] = mse_id
+
+    def _get_ood_dataset(self):
+        if self.crl_model == 'pcl':
+            ood_dataset = PCLChamberDataset()
+        elif self.crl_model == 'cmvae':
+            pass
+        elif self.crl_model == 'contrast_crl':
+            pass
 
     def predict(self, X_ood):
         # Load trained model
