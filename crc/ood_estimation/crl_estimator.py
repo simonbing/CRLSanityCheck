@@ -3,12 +3,17 @@ import os
 import pickle
 
 import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+import torch
+from torch.utils.data import DataLoader
 import wandb
 
 from crc.ood_estimation.base_estimator import OODEstimator
+from crc.ood_estimation.datasets import EmbeddingDataset
 from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
 from crc.baselines import EvalPCL, EvalCMVAE, EvalContrastCRL
+from crc.utils import get_device
 from crc.baselines.PCL.pcl.dataset import ChamberDataset as PCLChamberDataset
 
 
@@ -36,6 +41,7 @@ class CRLOODEstimator(OODEstimator):
                                seed=self.seed, batch_size=self.batch_size,
                                epochs=self.epochs,
                                lat_dim=self.lat_dim, root_dir=self.results_root)
+        self.device = get_device()
 
         # Linear head
         self.lin_model = LinearRegression()
@@ -48,16 +54,28 @@ class CRLOODEstimator(OODEstimator):
         elif self.crl_model == 'pcl':
             return TrainPCL
 
-    def _get_evaluator(self):
-        if self.crl_model == 'cmvae':
-            return EvalCMVAE
-        elif self.crl_model == 'contrast_crl':
-            return EvalContrastCRL
-        elif self.crl_model == 'pcl':
-            return EvalPCL
+    def _get_embed_dataset(self, X):
+        if self.crl_model == 'pcl':
+            pass
+        elif self.crl_model in ['cmvae', 'contrast_crl']:
+            dataset = EmbeddingDataset(data=X, data_root=self.data_root)
+
+        return dataset
+
+    # def _get_evaluator(self):
+    #     if self.crl_model == 'cmvae':
+    #         return EvalCMVAE
+    #     elif self.crl_model == 'contrast_crl':
+    #         return EvalContrastCRL
+    #     elif self.crl_model == 'pcl':
+    #         return EvalPCL
 
     def train(self, X, y):
         self.trainer.train()
+
+        # Get trained model
+        trained_model_path = os.path.join(self.trainer.train_dir, 'best_model.pt')
+        self.trained_model = torch.load(trained_model_path)
 
         # TODO:
         # - get_embeding from evaluator will not work since dataloading does not
@@ -72,21 +90,42 @@ class CRLOODEstimator(OODEstimator):
         # z_hat_batch = self.trained_model.encode(x_batch)
         # z_hat = concat(z_hat_batch_list)
 
+        # Get embeddings
+        embed_dataset = self._get_embed_dataset(X)
+        embed_dataloader = DataLoader(embed_dataset, batch_size=self.batch_size,
+                                      shuffle=False)
+
+        z_hat_list = []
+        self.trained_model = self.trained_model.to(self.device)
+        self.trained_model.eval()
+
+        for x_batch in embed_dataloader:
+            x_batch = x_batch.to(self.device)
+
+            z_hat_batch = self.trained_model.get_z(x_batch)
+            z_hat_list.append(z_hat_batch.detach().cpu().numpy())
+
+        z_hat = np.concatenate(z_hat_list)
+
+        z_hat_train, z_hat_test, y_train, y_test = train_test_split(z_hat, y,
+                                                                    train_size=self.train_frac,
+                                                                    shuffle=False)
+
         # Get CRL evaluator
-        evaluator = self._get_evaluator()
-        self.evaluator = evaluator(trained_model_path=os.path.join(self.trainer.train_dir,
-                                                                   'best_model.pt'))
+        # evaluator = self._get_evaluator()
+        # self.evaluator = evaluator(trained_model_path=os.path.join(self.trainer.train_dir,
+        #                                                            'best_model.pt'))
+        #
+        # dataset_train_path = os.path.join(self.trainer.model_dir, 'train_dataset.pkl')
+        # with open(dataset_train_path, 'rb') as f:
+        #     dataset_train = pickle.load(f)
 
-        dataset_train_path = os.path.join(self.trainer.model_dir, 'train_dataset.pkl')
-        with open(dataset_train_path, 'rb') as f:
-            dataset_train = pickle.load(f)
+        # _, z_hat_train = self.evaluator.get_encodings(dataset_train)
 
-        _, z_hat_train = self.evaluator.get_encodings(dataset_train)
-
-        num_train_samples = int(len(y) * self.train_frac)
-        y_train = y[:num_train_samples]
-        y_test = y[num_train_samples:]
-        assert len(y_train) == len(z_hat_train)
+        # num_train_samples = int(len(y) * self.train_frac)
+        # y_train = y[:num_train_samples]
+        # y_test = y[num_train_samples:]
+        # assert len(y_train) == len(z_hat_train)
 
         # Use embeddings to train linear head
 
@@ -95,23 +134,15 @@ class CRLOODEstimator(OODEstimator):
         self.lin_model.fit(z_hat_train[1:, :], y_train[1:, :])
 
         # Get test dataset
-        dataset_test_path = os.path.join(self.trainer.model_dir, 'test_dataset.pkl')
-        with open(dataset_test_path, 'rb') as f:
-            dataset_test = pickle.load(f)
-        _, z_hat_test = self.evaluator.get_encodings(dataset_test)
+        # dataset_test_path = os.path.join(self.trainer.model_dir, 'test_dataset.pkl')
+        # with open(dataset_test_path, 'rb') as f:
+        #     dataset_test = pickle.load(f)
+        # _, z_hat_test = self.evaluator.get_encodings(dataset_test)
 
         y_hat_test = self.lin_model.predict(z_hat_test)
         mse_id = np.mean((y_hat_test - y_test) ** 2)
         logging.info(f'ID mse: {mse_id}')
         wandb.run.summary['mse_id'] = mse_id
-
-    def _get_ood_dataset(self):
-        if self.crl_model == 'pcl':
-            ood_dataset = PCLChamberDataset()
-        elif self.crl_model == 'cmvae':
-            pass
-        elif self.crl_model == 'contrast_crl':
-            pass
 
     def predict(self, X_ood):
         # Load trained model
@@ -123,5 +154,23 @@ class CRLOODEstimator(OODEstimator):
 
         # Then: embed from that dataset, predict using trained linear head
 
-        y_hat = self.lin_model.predict(Z_ood)
-        pass
+        # Get embeddings
+        embed_dataset = self._get_embed_dataset(X_ood)
+        embed_dataloader = DataLoader(embed_dataset, batch_size=self.batch_size,
+                                      shuffle=False)
+
+        z_hat_ood_list = []
+        self.trained_model = self.trained_model.to(self.device)
+        self.trained_model.eval()
+
+        for x_batch in embed_dataloader:
+            x_batch = x_batch.to(self.device)
+
+            z_hat_batch = self.trained_model.get_z(x_batch)
+            z_hat_ood_list.append(z_hat_batch.detach().cpu().numpy())
+
+        z_hat_ood = np.concatenate(z_hat_ood_list)
+
+        y_hat = self.lin_model.predict(z_hat_ood)
+
+        return y_hat

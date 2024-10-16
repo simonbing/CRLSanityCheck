@@ -24,6 +24,9 @@ def get_task_environments(task):
     if task == 'lt_scm_2':
         exp_name = 'scm_2'
         env_list = ['red', 'green', 'blue', 'pol_1', 'pol_2']
+    elif task == 'lt_1':
+        exp_name = 'scm_2'
+        env_list = ['red', 'green', 'blue', 'pol_1']
     elif task == 'lt_pcl_1':
         exp_name = 'ar_1_uniform'
         env_list = ['ref']

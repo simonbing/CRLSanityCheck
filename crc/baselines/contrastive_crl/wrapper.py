@@ -98,15 +98,17 @@ class TrainContrastCRL(TrainModel):
         with open(os.path.join(self.train_dir, 'config.json'), 'w') as f:
             json.dump(training_metadata | training_kwargs, f, indent=4)
 
-        # Train model
-        best_model, last_model, _, _ = train_model(model, device, dl_train,
-                                                   dl_val, training_kwargs,
-                                                   verbose=True)
-        # Save model
-        torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
-        torch.save(last_model, os.path.join(self.train_dir, 'last_model.pt'))
+        best_model_path = os.path.join(self.train_dir, 'best_model.pt')
+        if not os.path.exists(best_model_path):
+            # Train model
+            best_model, last_model, _, _ = train_model(model, device, dl_train,
+                                                       dl_val, training_kwargs,
+                                                       verbose=True)
+            # Save model
+            torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
+            torch.save(last_model, os.path.join(self.train_dir, 'last_model.pt'))
 
-        print('Training finished!')
+            print('Training finished!')
 
 
 class EvalContrastCRL(EvalModel):
