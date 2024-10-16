@@ -51,7 +51,7 @@ class TrainPCL(TrainModel):
                   decay_factor=0.1,
                   batch_size=self.batch_size,
                   train_dir=self.train_dir,
-                  in_dim=4,  # hardcoded for image data
+                  in_dim=5,  # hardcoded for image data
                   latent_dim=self.lat_dim,
                   ar_order=1,
                   weight_decay=1e-5,

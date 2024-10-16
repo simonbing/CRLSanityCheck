@@ -8,13 +8,19 @@ import torch
 from torch.utils.data import Dataset
 
 from crc.utils import get_task_environments
-from crc.baselines.PCL.subfunc.generate_artificial_data_art import generate_artificial_data
+from crc.baselines.PCL.subfunc.generate_artificial_data import \
+    generate_artificial_data, apply_mlp_to_source
 
 
 class ChamberDataset(Dataset):
-    def __init__(self, dataset, task, data_root, whiten=False, synth_mixing=False):
+    def __init__(self, dataset, task, data_root, whiten=False):
         super().__init__()
         self.dataset = dataset
+        if self.dataset.endswith('synth_mix'):
+            self.synth_mixing = True
+            self.dataset = self.dataset.removesuffix('_synth_mix')
+        else:
+            self.synth_mixing = False
 
         if self.dataset == 'synth_pcl':
             x, s, _, _, _, _ = generate_artificial_data(num_comp=4,
@@ -39,20 +45,25 @@ class ChamberDataset(Dataset):
             self.env = self.env_list[0]
             self.data = chamber_data.get_experiment(name=f'{self.exp}_{self.env}').as_pandas_dataframe()
 
-            self.whiten = whiten
-            if self.whiten:
-                # Whitening
-                self.pca = PCA(whiten=True)
-                img_arr = np.asarray([io.imread(os.path.join(self.data_root,
-                                                             self.dataset,
-                                                             f'{self.exp}_{self.env}',
-                                                             'images_64',
-                                                             self.data['image_file'].iloc[i])).flatten()
-                                      for i in range(len(self.data))])
-                self.pca.fit(img_arr)
+            if self.synth_mixing:
+                self.s = self.data[self.features].to_numpy()
+                x, _ = apply_mlp_to_source(self.s, num_layer=3, random_seed=0)
 
-            self.synth_mixing = synth_mixing
-            # Apply synthetic mixing to the data once here and then just get data later!
+                pca = PCA(whiten=True)
+                x = pca.fit_transform(x)
+                self.data = x
+            else:
+                self.whiten = whiten
+                if self.whiten:
+                    # Whitening
+                    self.pca = PCA(whiten=True)
+                    img_arr = np.asarray([io.imread(os.path.join(self.data_root,
+                                                                 self.dataset,
+                                                                 f'{self.exp}_{self.env}',
+                                                                 'images_64',
+                                                                 self.data['image_file'].iloc[i])).flatten()
+                                          for i in range(len(self.data))])
+                    self.pca.fit(img_arr)
 
     def __getitem__(self, item):
         if torch.is_tensor(item):
@@ -62,7 +73,7 @@ class ChamberDataset(Dataset):
 
         rand_item = np.random.choice(len(self.data))
 
-        if self.dataset == 'synth_pcl':
+        if self.dataset == 'synth_pcl' or self.synth_mixing:
             sample = self.data[item, :]
             tm1_sample = self.data[item - 1, :]
             rand_sample = self.data[rand_item, :]
