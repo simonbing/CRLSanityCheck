@@ -18,7 +18,7 @@ class ChamberDataset(Dataset):
 
         if self.dataset == 'synth_pcl':
             x, s, _, _, _, _ = generate_artificial_data(num_comp=4,
-                                                        num_data=2**20,
+                                                        num_data=2**15,
                                                         ar_coef= [0.9]*4,
                                                         ar_order=1,
                                                         num_layer=3,
