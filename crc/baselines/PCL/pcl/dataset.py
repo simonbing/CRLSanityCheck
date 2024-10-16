@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import Dataset
 
 from crc.utils import get_task_environments
-from crc.baselines.PCL.subfunc.generate_artificial_data import \
+from crc.baselines.PCL.subfunc.generate_artificial_data_art import \
     generate_artificial_data, apply_mlp_to_source
 
 
