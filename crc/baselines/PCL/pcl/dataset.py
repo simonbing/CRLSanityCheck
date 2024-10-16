@@ -47,6 +47,8 @@ class ChamberDataset(Dataset):
 
             if self.synth_mixing:
                 self.s = self.data[self.features].to_numpy()
+                self.s = (self.s - np.mean(self.s, axis=0, keepdims=True)) / \
+                         np.std(self.s, axis=0, keepdims=True)
                 x, _ = apply_mlp_to_source(self.s, num_layer=3, random_seed=0)
 
                 pca = PCA(whiten=True)
