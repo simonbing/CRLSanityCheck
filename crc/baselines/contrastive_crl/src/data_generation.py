@@ -368,6 +368,22 @@ class ChamberDataset(Dataset):
                     [0, 0, 0, 0, 0],
                 ]
             )
+        elif self.exp == 'scm_4':
+            self.W = np.array(
+                [
+                    [0, 0, 0],
+                    [1, 0, 0],
+                    [0, 1, 0],
+                ]
+            )
+        elif self.exp == 'scm_5':
+            self.W = np.array(
+                [
+                    [0, 0, 0],
+                    [1, 0, 1],
+                    [0, 0, 0],
+                ]
+            )
 
     def __len__(self):
         return len(self.obs_data)
