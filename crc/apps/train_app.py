@@ -7,12 +7,13 @@ from crc.baselines import TrainCMVAE, TrainContrastCRL, TrainPCL
 
 
 class TrainApplication(object):
-    def __init__(self, model, output_root, data_root, dataset, task,
+    def __init__(self, model, output_root, data_root, dataset, image_data, task,
                  run_name, overwrite_data, seed, batch_size, epochs, lat_dim):
         self.model = model
         self.output_root = output_root
         self.data_root = data_root
         self.dataset = dataset
+        self.image_data = image_data
         self.task = task
         self.run_name = run_name
         self.overwrite_data = overwrite_data
@@ -21,11 +22,17 @@ class TrainApplication(object):
         self.epochs = epochs
         self.lat_dim = lat_dim
         trainer = self._get_trainer()
-        self.trainer = trainer(data_root=self.data_root, dataset=self.dataset,
-                               task=self.task, overwrite_data=self.overwrite_data,
-                               model=self.model, run_name=self.run_name,
-                               seed=self.seed, batch_size=self.batch_size,
-                               epochs=self.epochs, lat_dim=self.lat_dim,
+        self.trainer = trainer(data_root=self.data_root,
+                               dataset=self.dataset,
+                               image_data=self.image_data,
+                               task=self.task,
+                               overwrite_data=self.overwrite_data,
+                               model=self.model,
+                               run_name=self.run_name,
+                               seed=self.seed,
+                               batch_size=self.batch_size,
+                               epochs=self.epochs,
+                               lat_dim=self.lat_dim,
                                root_dir=self.output_root)
 
     def run(self):

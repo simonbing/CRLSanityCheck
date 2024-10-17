@@ -15,10 +15,11 @@ from crc.utils import NpEncoder
 
 
 class EvalApplication(object):
-    def __init__(self, seed, model, root_dir, dataset, task, run_name, metrics):
+    def __init__(self, seed, model, root_dir, dataset, image_data, task, run_name, metrics):
         self.seed = seed
         self.model = model
         self.dataset = dataset
+        self.image_data = image_data
         self.model_dir = os.path.join(root_dir, dataset, task, self.model)
         self.train_dir = os.path.join(self.model_dir, run_name,
                                       f'seed_{self.seed}', 'train')

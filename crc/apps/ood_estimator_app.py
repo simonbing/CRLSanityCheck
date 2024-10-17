@@ -9,10 +9,12 @@ from crc.ood_estimation import get_ood_task_data, OLSOODEstimator, \
 
 
 class OODEstimatorApplication(object):
-    def __init__(self, seed, estimation_model, dataset, task, data_root, results_root, lat_dim, epochs,
+    def __init__(self, seed, estimation_model, dataset, image_data, task,
+                 data_root, results_root, lat_dim, epochs,
                  batch_size, learning_rate, run_name):
         self.seed = seed
         self.dataset = dataset
+        self.image_data = image_data
         self.task = task  # encodes which environments to train and test on
         self.data_root = data_root
         self.results_root = results_root
