@@ -38,6 +38,7 @@ class OODEstimatorApplication(object):
                                      data_root=self.data_root)
         elif estimation_model == 'mlp':
             return MLPOODEstimator(seed=self.seed,
+                                   image_data=self.image_data,
                                    task=self.task,
                                    data_root=self.data_root,
                                    epochs=self.epochs,
@@ -46,6 +47,7 @@ class OODEstimatorApplication(object):
         elif estimation_model in ['pcl', 'cmvae', 'contrast_crl']:
             return CRLOODEstimator(seed=self.seed,
                                    dataset=self.dataset,
+                                   image_data=self.image_data,
                                    task=self.task,
                                    data_root=self.data_root,
                                    results_root=self.results_root,
