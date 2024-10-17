@@ -21,7 +21,8 @@ class Maxout(nn.Module):
 # =============================================================
 # =============================================================
 class Net(nn.Module):
-    def __init__(self, h_sizes, in_dim, latent_dim, ar_order=1, pool_size=2):
+    def __init__(self, h_sizes, in_dim, latent_dim, image_data, ar_order=1,
+                 pool_size=2):
         """ Network model for gaussian distribution with scale-mean modulations
          Args:
              h_sizes: number of channels for each layer [num_layer+1] (first size is input-dim)
@@ -31,6 +32,7 @@ class Net(nn.Module):
          """
         super(Net, self).__init__()
         assert ar_order == 1  # this model is only for AR(1)
+        self.image_data = image_data
         # h
         h_sizes_aug = [in_dim] + h_sizes
         h = [nn.Linear(h_sizes_aug[k-1], h_sizes_aug[k]*pool_size) for k in range(1, len(h_sizes_aug)-1)]
@@ -54,6 +56,8 @@ class Net(nn.Module):
          Args:
              x: input [batch, time(t:t-p), dim]
          """
+        if self.image_data:
+            x = torch.flatten(x, start_dim=2)
         batch_size, _, num_dim = x.shape
 
         # h
@@ -76,3 +80,17 @@ class Net(nn.Module):
         logits = - q + qbar + self.m
 
         return logits, h
+
+    def get_z(self, x_list):
+        x = x_list[:, 0, ...]
+        x_perm = x_list[:, 1, ...]
+
+        x_cat = torch.cat((x, x_perm))
+
+        _, h = self.forward(x_cat)
+        h, h_perm = torch.split(h, split_size_or_sections=int(h.size()[0] / 2),
+                                dim=0)
+
+        z_hat = h[:, 0, :]
+
+        return z_hat

@@ -41,6 +41,7 @@ class TrainPCL(TrainModel):
         if not os.path.exists(best_model_path):
             # Training (only runs if saved model doesn't exist yet)
             train(data=dl_train,
+                  image_data=self.image_data,
                   epochs=self.epochs,
                   random_seed=self.seed,
                   list_hidden_nodes=[8, 8] + [self.lat_dim],
@@ -51,7 +52,7 @@ class TrainPCL(TrainModel):
                   decay_factor=0.1,
                   batch_size=self.batch_size,
                   train_dir=self.train_dir,
-                  in_dim=5,  # hardcoded for image data
+                  in_dim=3*64*64 if self.image_data else self.lat_dim,
                   latent_dim=self.lat_dim,
                   ar_order=1,
                   weight_decay=1e-5,

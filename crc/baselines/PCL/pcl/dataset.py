@@ -89,29 +89,34 @@ class ChamberDataset(Dataset):
             img_path = os.path.join(self.data_root, self.dataset,
                                     f'{self.exp}_{self.env}', 'images_64',
                                     self.data['image_file'].iloc[item])
-            img_sample = io.imread(img_path).flatten()
+            img_sample = io.imread(img_path)
 
             img_tm1_path = os.path.join(self.data_root, self.dataset,
                                         f'{self.exp}_{self.env}', 'images_64',
                                         self.data['image_file'].iloc[item - 1])
-            img_tm1_sample = io.imread(img_tm1_path).flatten()
+            img_tm1_sample = io.imread(img_tm1_path)
 
             img_rand_path = os.path.join(self.data_root, self.dataset,
                                          f'{self.exp}_{self.env}', 'images_64',
                                          self.data['image_file'].iloc[rand_item])
-            img_rand_sample = io.imread(img_rand_path).flatten()
+            img_rand_sample = io.imread(img_rand_path)
+
+            # Normalize inputs
+            img_sample = img_sample / 255.0
+            img_tm1_sample = img_tm1_sample / 255.0
+            img_rand_sample = img_rand_sample / 255.0
 
             if self.whiten:
                 img_sample = self.pca.transform(img_sample)
                 img_tm1_sample = self.pca.transform(img_tm1_sample)
                 img_rand_sample = self.pca.transform(img_rand_sample)
 
-            X = torch.as_tensor(np.stack((img_sample,
-                                          img_tm1_sample),
+            X = torch.as_tensor(np.stack((np.transpose(img_sample, (2, 0, 1)),
+                                          np.transpose(img_tm1_sample, (2, 0, 1))),
                                          axis=0),
                                 dtype=torch.float32)
-            X_perm = torch.as_tensor(np.stack((img_sample,
-                                               img_rand_sample),
+            X_perm = torch.as_tensor(np.stack((np.transpose(img_sample, (2, 0, 1)),
+                                               np.transpose(img_rand_sample, (2, 0, 1))),
                                               axis=0),
                                      dtype=torch.float32)
 

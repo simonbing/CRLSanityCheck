@@ -1,3 +1,4 @@
+import logging
 import random
 
 import numpy as np
@@ -75,8 +76,5 @@ class OODEstimatorApplication(object):
         y_hat = self.estimator.predict(X_df_test)
 
         mse_ood = np.mean((y_test - y_hat) ** 2)
-
+        logging.info(f'OOD mse: {mse_ood}')
         wandb.run.summary['mse_ood'] = mse_ood
-        a = 0
-
-        # Compute held out test metrics

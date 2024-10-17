@@ -1,6 +1,5 @@
 import logging
 import os
-import pickle
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -10,19 +9,17 @@ from torch.utils.data import DataLoader
 import wandb
 
 from crc.ood_estimation.base_estimator import OODEstimator
-from crc.ood_estimation.datasets import EmbeddingDataset
+from crc.ood_estimation.datasets import EmbeddingDataset, PCLEmbeddingDataset
 from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
-from crc.baselines import EvalPCL, EvalCMVAE, EvalContrastCRL
 from crc.utils import get_device
-from crc.baselines.PCL.pcl.dataset import ChamberDataset as PCLChamberDataset
 
 
 class CRLOODEstimator(OODEstimator):
-    def __init__(self, seed, task, dataset, data_root, results_root, crl_model, lat_dim,
+    def __init__(self, seed, image_data, task, dataset, data_root, results_root, crl_model, lat_dim,
                  batch_size,
                  epochs, run_name,
                  overwrite_data=False):
-        super().__init__(seed, task, data_root, results_root)
+        super().__init__(seed, image_data, task, data_root, results_root)
         self.dataset = dataset
         self.lat_dim = lat_dim
         self.batch_size = batch_size
@@ -35,12 +32,18 @@ class CRLOODEstimator(OODEstimator):
 
         # Get CRL trainer
         trainer = self._get_trainer()
-        self.trainer = trainer(data_root=self.data_root, dataset=self.dataset,
-                               task=self.task, overwrite_data=self.overwrite_data,
-                               model=self.crl_model, run_name=self.run_name,
-                               seed=self.seed, batch_size=self.batch_size,
+        self.trainer = trainer(data_root=self.data_root,
+                               dataset=self.dataset,
+                               image_data=self.image_data,
+                               task=self.task,
+                               overwrite_data=self.overwrite_data,
+                               model=self.crl_model,
+                               run_name=self.run_name,
+                               seed=self.seed,
+                               batch_size=self.batch_size,
                                epochs=self.epochs,
-                               lat_dim=self.lat_dim, root_dir=self.results_root)
+                               lat_dim=self.lat_dim,
+                               root_dir=self.results_root)
         self.device = get_device()
 
         # Linear head
@@ -56,19 +59,11 @@ class CRLOODEstimator(OODEstimator):
 
     def _get_embed_dataset(self, X):
         if self.crl_model == 'pcl':
-            pass
+            dataset =PCLEmbeddingDataset(data=X, data_root=self.data_root)
         elif self.crl_model in ['cmvae', 'contrast_crl']:
             dataset = EmbeddingDataset(data=X, data_root=self.data_root)
 
         return dataset
-
-    # def _get_evaluator(self):
-    #     if self.crl_model == 'cmvae':
-    #         return EvalCMVAE
-    #     elif self.crl_model == 'contrast_crl':
-    #         return EvalContrastCRL
-    #     elif self.crl_model == 'pcl':
-    #         return EvalPCL
 
     def train(self, X, y):
         self.trainer.train()
@@ -76,19 +71,6 @@ class CRLOODEstimator(OODEstimator):
         # Get trained model
         trained_model_path = os.path.join(self.trainer.train_dir, 'best_model.pt')
         self.trained_model = torch.load(trained_model_path)
-
-        # TODO:
-        # - get_embeding from evaluator will not work since dataloading does not
-        #   just take samples and encodes them, but often copies training samples
-        #   multiple times -> need simple dataset class that doesnt copy samples!
-        # - Define simple dataset that takes the pd df and returns the items. If
-        #   method needs special dataset class (PCL) define this and pass in init.
-        # - Extend each trained model class with a method that only encodes, given
-        #   a batch sample from the dataloader
-        # Should look like:
-        # x_batch from dataloader
-        # z_hat_batch = self.trained_model.encode(x_batch)
-        # z_hat = concat(z_hat_batch_list)
 
         # Get embeddings
         embed_dataset = self._get_embed_dataset(X)
@@ -109,35 +91,12 @@ class CRLOODEstimator(OODEstimator):
 
         z_hat_train, z_hat_test, y_train, y_test = train_test_split(z_hat, y,
                                                                     train_size=self.train_frac,
-                                                                    shuffle=False)
-
-        # Get CRL evaluator
-        # evaluator = self._get_evaluator()
-        # self.evaluator = evaluator(trained_model_path=os.path.join(self.trainer.train_dir,
-        #                                                            'best_model.pt'))
-        #
-        # dataset_train_path = os.path.join(self.trainer.model_dir, 'train_dataset.pkl')
-        # with open(dataset_train_path, 'rb') as f:
-        #     dataset_train = pickle.load(f)
-
-        # _, z_hat_train = self.evaluator.get_encodings(dataset_train)
-
-        # num_train_samples = int(len(y) * self.train_frac)
-        # y_train = y[:num_train_samples]
-        # y_test = y[num_train_samples:]
-        # assert len(y_train) == len(z_hat_train)
-
-        # Use embeddings to train linear head
+                                                                    shuffle=True,
+                                                                    random_state=self.seed)
 
         # Train linear regression with embedding and labels
         # Discarding first sample because of PCL dataloader quirk
         self.lin_model.fit(z_hat_train[1:, :], y_train[1:, :])
-
-        # Get test dataset
-        # dataset_test_path = os.path.join(self.trainer.model_dir, 'test_dataset.pkl')
-        # with open(dataset_test_path, 'rb') as f:
-        #     dataset_test = pickle.load(f)
-        # _, z_hat_test = self.evaluator.get_encodings(dataset_test)
 
         y_hat_test = self.lin_model.predict(z_hat_test)
         mse_id = np.mean((y_hat_test - y_test) ** 2)
@@ -145,15 +104,6 @@ class CRLOODEstimator(OODEstimator):
         wandb.run.summary['mse_id'] = mse_id
 
     def predict(self, X_ood):
-        # Load trained model
-
-        # Convert df into something the model can ingest (image loading) and ret
-        # Probably need to make a new dataset somewhere earlier (where we get the task)
-        # and save this for loading later... Maybe in the init of this app?
-        # Should be able to pass this task to the respective dataset building methods of each model...
-
-        # Then: embed from that dataset, predict using trained linear head
-
         # Get embeddings
         embed_dataset = self._get_embed_dataset(X_ood)
         embed_dataloader = DataLoader(embed_dataset, batch_size=self.batch_size,
