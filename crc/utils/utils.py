@@ -42,4 +42,4 @@ def get_task_environments(task):
         env_list = ['ref']
         features = ['red', 'green', 'blue', 'pol_1', 'pol_2']
 
-    return exp_name, env_list
+    return exp_name, env_list, features
