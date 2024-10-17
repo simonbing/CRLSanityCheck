@@ -16,9 +16,9 @@ from crc.utils.torch_utils import get_device
 
 
 class MLPOODEstimator(OODEstimator):
-    def __init__(self, seed, task, data_root, epochs, batch_size, learning_rate,
+    def __init__(self, seed, image_data, task, data_root, epochs, batch_size, learning_rate,
                  val_freq=5):
-        super().__init__(seed, task, data_root)
+        super().__init__(seed, image_data, task, data_root)
 
         # Build model
         self.device = get_device()
