@@ -78,10 +78,19 @@ class EvalApplication(object):
 
             nr_edges = np.count_nonzero(G)
             shd_dict = evaluate_graph_metrics(G, G_hat, nr_edges=nr_edges)
-
             print(f"SHD: {shd_dict['SHD']}")
             print(f"SHD_opt: {shd_dict['SHD_opt']}")
             print(f"SHD_edge_matched: {shd_dict['SHD_edge_matched']}")
+
+            # Compute SHD with transposed g.t. adjacency matrix as well, since
+            # methods may use either convention.
+            shd_dict_transp = evaluate_graph_metrics(G.T, G_hat, nr_edges=nr_edges)
+            shd_dict['SHD_transp'] = shd_dict_transp['SHD']
+            shd_dict['SHD_opt_transp'] = shd_dict_transp['SHD_opt']
+            shd_dict['SHD_edge_matched_transp'] = shd_dict_transp['SHD_edge_matched']
+            print(f"SHD: {shd_dict['SHD_transp']}")
+            print(f"SHD_opt: {shd_dict['SHD_opt_transp']}")
+            print(f"SHD_edge_matched: {shd_dict['SHD_edge_matched_transp']}")
 
             try: # Compute SHD with permutation from MCC
                 G_hat_perm = G_hat[permutation[1], :][:, permutation[1]]
