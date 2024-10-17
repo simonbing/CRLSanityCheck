@@ -36,9 +36,7 @@ class ChamberDataset(Dataset):
         else:
             self.data_root = data_root
 
-            self.exp, self.env_list = get_task_environments(task)
-
-            self.features = ['red', 'green', 'blue', 'pol_1', 'pol_2']  # hardcoded for now
+            self.exp, self.env_list, self.features = get_task_environments(task)
 
             chamber_data = ChamberData(self.dataset, root=self.data_root, download=True)
             # PCL only takes a single environment, so only take the first element in env_list

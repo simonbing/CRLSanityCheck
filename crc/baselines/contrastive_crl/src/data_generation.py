@@ -328,7 +328,7 @@ class ChamberDataset(Dataset):
 
         self.data_root = data_root
         self.chamber_data_name = dataset
-        self.exp, self.env_list = get_task_environments(task)
+        self.exp, self.env_list, self.features = get_task_environments(task)
         chamber_data = ChamberData(self.chamber_data_name, root=self.data_root,
                                    download=True)
 
@@ -401,8 +401,8 @@ class ChamberDataset(Dataset):
                 torch.as_tensor(self.iv_names[item],
                                 dtype=torch.int)
         else: # also return the ground truth variables
-            Z_obs = self.obs_data[['red', 'green', 'blue', 'pol_1', 'pol_2']].iloc[item].to_numpy()
-            Z_iv = self.iv_data[['red', 'green', 'blue', 'pol_1', 'pol_2']].iloc[item].to_numpy()
+            Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
+            Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
             return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
                                    dtype=torch.float32), \
                 torch.as_tensor(iv_sample.transpose((2, 0, 1)),
