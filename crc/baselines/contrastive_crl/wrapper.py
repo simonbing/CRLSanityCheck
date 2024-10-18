@@ -25,7 +25,9 @@ class TrainContrastCRL(TrainModel):
                                              hidden_dim=512, hidden_layers=0,
                                              residual=True)
         else:
-            return get_contrastive_image(latent_dim=self.lat_dim, channels=10)
+            return get_contrastive_image(latent_dim=self.lat_dim,
+                                         conv=self.conv,
+                                         channels=10)
 
     def train(self):
         """
@@ -86,7 +88,7 @@ class TrainContrastCRL(TrainModel):
 
         training_kwargs = {
             'epochs': self.epochs,
-            'optimizer': 'sgd',
+            'optimizer': 'adam',
             'mu': 0.00001,
             'eta': 0.0001,
             'kappa': 0.1,

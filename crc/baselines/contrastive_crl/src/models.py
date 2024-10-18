@@ -41,8 +41,11 @@ def get_contrastive_linear_synthetic(input_dim, latent_dim, hidden_dim, hidden_l
     return ContrastiveModel(latent_dim, embedding)
 
 
-def get_contrastive_image(latent_dim, channels=1, **kwargs):
-    embedding = ImageEncoderMinimal(latent_dim, vae=False, channels=channels)
+def get_contrastive_image(latent_dim, conv, channels=1, **kwargs):
+    if conv:
+        embedding = ImageEncoderChambers(latent_dim)
+    else:
+        embedding = ImageEncoderMinimal(latent_dim, vae=False, channels=channels)
     return ContrastiveModel(latent_dim, embedding)
 
 
@@ -176,7 +179,6 @@ class VAE_DAG(nn.Module):
     def get_latents(self, x):
         z_est, _ = self.encoder(x)
         return z_est
-
 
 
 class Encoder(nn.Module):
@@ -315,6 +317,48 @@ class ImageEncoder(torch.nn.Module):
         x = self.feat_net(x)
         x = x.view(x.shape[0], x.shape[1])
         x = self.fc_net(x)
+        return x
+
+
+class ImageEncoderChambers(nn.Module):
+    def __init__(self, latent_dim, n_conv_layers=2):
+        super().__init__()
+
+        NormLayer = lambda d: nn.GroupNorm(num_groups=8, num_channels=d)
+
+        h_dim = 64
+
+
+        conv_layers = [
+            nn.Sequential(
+                nn.Conv2d(3 if i_layer == 0 else h_dim,
+                          h_dim,
+                          kernel_size=3,
+                          stride=2,
+                          padding=1,
+                          bias=False),
+                NormLayer(h_dim),
+                nn.SiLU(),
+                nn.Conv2d(h_dim, h_dim, kernel_size=3, stride=1,
+                          padding=1,
+                          bias=False),
+                NormLayer(h_dim),
+                nn.SiLU()
+            ) for i_layer in range(n_conv_layers)
+        ]
+
+        self.conv_encoder = nn.Sequential(
+            *conv_layers,
+            nn.Flatten(),
+            nn.Linear(16 * 16 * h_dim, 16 * h_dim),
+            nn.LayerNorm(16 * h_dim),
+            nn.SiLU(),
+            nn.Linear(16 * h_dim, latent_dim)
+        )
+
+    def forward(self, x):
+        x = self.conv_encoder(x)
+
         return x
 
 
