@@ -10,7 +10,7 @@ import wandb
 
 from crc.ood_estimation.base_estimator import OODEstimator
 from crc.ood_estimation.datasets import EmbeddingDataset, PCLEmbeddingDataset
-from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL
+from crc.baselines import TrainPCL, TrainCMVAE, TrainContrastCRL, TrainRGBBaseline
 from crc.utils import get_device
 
 
@@ -56,11 +56,13 @@ class CRLOODEstimator(OODEstimator):
             return TrainContrastCRL
         elif self.crl_model == 'pcl':
             return TrainPCL
+        elif self.crl_model == 'rgb_baseline':
+            return TrainRGBBaseline
 
     def _get_embed_dataset(self, X):
         if self.crl_model == 'pcl':
-            dataset =PCLEmbeddingDataset(data=X, data_root=self.data_root)
-        elif self.crl_model in ['cmvae', 'contrast_crl']:
+            dataset = PCLEmbeddingDataset(data=X, data_root=self.data_root)
+        else:
             dataset = EmbeddingDataset(data=X, data_root=self.data_root)
 
         return dataset
