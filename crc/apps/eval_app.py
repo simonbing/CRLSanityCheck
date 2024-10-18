@@ -88,9 +88,9 @@ class EvalApplication(object):
             shd_dict['SHD_transp'] = shd_dict_transp['SHD']
             shd_dict['SHD_opt_transp'] = shd_dict_transp['SHD_opt']
             shd_dict['SHD_edge_matched_transp'] = shd_dict_transp['SHD_edge_matched']
-            print(f"SHD: {shd_dict['SHD_transp']}")
-            print(f"SHD_opt: {shd_dict['SHD_opt_transp']}")
-            print(f"SHD_edge_matched: {shd_dict['SHD_edge_matched_transp']}")
+            print(f"SHD_transp: {shd_dict['SHD_transp']}")
+            print(f"SHD_opt_transp: {shd_dict['SHD_opt_transp']}")
+            print(f"SHD_edge_matched_transp: {shd_dict['SHD_edge_matched_transp']}")
 
             try: # Compute SHD with permutation from MCC
                 G_hat_perm = G_hat[permutation[1], :][:, permutation[1]]
