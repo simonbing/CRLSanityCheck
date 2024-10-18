@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import wandb
 
-from crc.baselines import EvalCMVAE, EvalContrastCRL, EvalPCL
+from crc.baselines import EvalCMVAE, EvalContrastCRL, EvalPCL, EvalRGBBaseline
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 from crc.baselines.PCL.pcl.utils import correlation
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
@@ -123,3 +123,5 @@ class EvalApplication(object):
             return EvalContrastCRL
         elif self.model == 'pcl':
             return EvalPCL
+        elif self.model == 'rgb_baseline':
+            return EvalRGBBaseline

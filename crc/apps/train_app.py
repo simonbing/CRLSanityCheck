@@ -50,5 +50,5 @@ class TrainApplication(object):
             return TrainContrastCRL
         elif self.model == 'pcl':
             return TrainPCL
-        elif self.model == 'rgb':
+        elif self.model == 'rgb_baseline':
             return TrainRGBBaseline

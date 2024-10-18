@@ -8,7 +8,7 @@ from crc.apps import TrainApplication, EvalApplication
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_enum('model', None, ['pcl', 'cmvae', 'contrast_crl'], 'Model to train.')
+flags.DEFINE_enum('model', None, ['pcl', 'cmvae', 'contrast_crl', 'rgb_baseline'], 'Model to train.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
