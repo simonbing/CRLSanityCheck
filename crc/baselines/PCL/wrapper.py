@@ -42,6 +42,7 @@ class TrainPCL(TrainModel):
             # Training (only runs if saved model doesn't exist yet)
             train(data=dl_train,
                   image_data=self.image_data,
+                  conv=self.conv,
                   epochs=self.epochs,
                   random_seed=self.seed,
                   list_hidden_nodes=[8, 8] + [self.lat_dim],

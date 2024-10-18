@@ -22,7 +22,7 @@ class Maxout(nn.Module):
 # =============================================================
 class Net(nn.Module):
     def __init__(self, h_sizes, in_dim, latent_dim, image_data, ar_order=1,
-                 pool_size=2):
+                 pool_size=2, conv=False):
         """ Network model for gaussian distribution with scale-mean modulations
          Args:
              h_sizes: number of channels for each layer [num_layer+1] (first size is input-dim)
@@ -33,21 +33,58 @@ class Net(nn.Module):
         super(Net, self).__init__()
         assert ar_order == 1  # this model is only for AR(1)
         self.image_data = image_data
-        # h
-        h_sizes_aug = [in_dim] + h_sizes
-        h = [nn.Linear(h_sizes_aug[k-1], h_sizes_aug[k]*pool_size) for k in range(1, len(h_sizes_aug)-1)]
-        h.append(nn.Linear(h_sizes_aug[-2], h_sizes_aug[-1], bias=False))
-        self.h = nn.ModuleList(h)
-        self.bn = nn.BatchNorm1d(num_features=latent_dim)
-        self.maxout = Maxout(pool_size)
+        self.conv = conv
+
+        if self.conv:
+            NormLayer = lambda d: nn.GroupNorm(num_groups=8, num_channels=d)
+
+            h_dim = 64
+            n_conv_layers = 2
+
+            conv_layers = [
+                nn.Sequential(
+                    nn.Conv2d(3 if i_layer == 0 else h_dim,
+                              h_dim,
+                              kernel_size=3,
+                              stride=2,
+                              padding=1,
+                              bias=False),
+                    NormLayer(h_dim),
+                    nn.SiLU(),
+                    nn.Conv2d(h_dim, h_dim, kernel_size=3, stride=1,
+                              padding=1,
+                              bias=False),
+                    NormLayer(h_dim),
+                    nn.SiLU()
+                ) for i_layer in range(n_conv_layers)
+            ]
+
+            self.conv_encoder = nn.Sequential(
+                *conv_layers,
+                nn.Flatten(),
+                nn.Linear(16 * 16 * h_dim, 16 * h_dim),
+                nn.LayerNorm(16 * h_dim),
+                nn.SiLU(),
+                nn.Linear(16 * h_dim, latent_dim)
+            )
+        else:
+            # h
+            h_sizes_aug = [in_dim] + h_sizes
+            h = [nn.Linear(h_sizes_aug[k-1], h_sizes_aug[k]*pool_size) for k in range(1, len(h_sizes_aug)-1)]
+            h.append(nn.Linear(h_sizes_aug[-2], h_sizes_aug[-1], bias=False))
+            self.h = nn.ModuleList(h)
+            self.bn = nn.BatchNorm1d(num_features=latent_dim)
+            self.maxout = Maxout(pool_size)
+
         self.w = nn.Conv1d(in_channels=latent_dim, out_channels=latent_dim, kernel_size=2, groups=latent_dim)
         self.a = nn.Parameter(torch.ones([1]))
         self.m = nn.Parameter(torch.zeros([1]))
         self.latent_dim = latent_dim
 
         # initialize
-        for k in range(len(self.h)):
-            torch.nn.init.xavier_uniform_(self.h[k].weight)
+        if not self.conv:
+            for k in range(len(self.h)):
+                torch.nn.init.xavier_uniform_(self.h[k].weight)
         torch.nn.init.constant_(self.w.weight[:, :, 0], 1)
         torch.nn.init.constant_(self.w.weight[:, :, 1], -1)
 
@@ -56,17 +93,23 @@ class Net(nn.Module):
          Args:
              x: input [batch, time(t:t-p), dim]
          """
+        batch_size = x.shape[0]
+        num_dim = x.shape[-1]
         if self.image_data:
-            x = torch.flatten(x, start_dim=2)
-        batch_size, _, num_dim = x.shape
+            if not self.conv:
+                x = torch.flatten(x, start_dim=2)
 
-        # h
-        h = x.reshape([-1, num_dim])  # [batch * ar, dim]
-        for k in range(len(self.h)):
-            h = self.h[k](h)
-            if k != len(self.h)-1:
-                h = self.maxout(h)
-        h = self.bn(h)
+        if self.conv:
+            h = torch.cat((x[:, 0, ...], x[:, 1, ...]))
+            h = self.conv_encoder(h)
+        else:
+            # h
+            h = x.reshape([-1, num_dim])  # [batch * ar, dim]
+            for k in range(len(self.h)):
+                h = self.h[k](h)
+                if k != len(self.h)-1:
+                    h = self.maxout(h)
+            h = self.bn(h)
         h = h.reshape([batch_size, -1, self.latent_dim])  # [batch, ar, dim]
 
         # Build r(y) ----------------------------------------------

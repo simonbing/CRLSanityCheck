@@ -19,6 +19,7 @@ from crc.baselines.PCL.subfunc.showdata import *
 # =============================================================
 def train(data,
           image_data,
+          conv,
           epochs,
           list_hidden_nodes,
           initial_learning_rate,
@@ -80,6 +81,7 @@ def train(data,
                     in_dim=in_dim,
                     latent_dim=latent_dim,
                     image_data=image_data,
+                    conv=conv,
                     ar_order=ar_order)
     model = model.to(device)
     model.train()

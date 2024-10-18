@@ -7,13 +7,15 @@ from crc.baselines import TrainCMVAE, TrainContrastCRL, TrainPCL, TrainRGBBaseli
 
 
 class TrainApplication(object):
-    def __init__(self, model, output_root, data_root, dataset, image_data, task,
+    def __init__(self, model, output_root, data_root, dataset, image_data, conv,
+                 task,
                  run_name, overwrite_data, seed, batch_size, epochs, lat_dim):
         self.model = model
         self.output_root = output_root
         self.data_root = data_root
         self.dataset = dataset
         self.image_data = image_data
+        self.conv = conv
         self.task = task
         self.run_name = run_name
         self.overwrite_data = overwrite_data
@@ -25,6 +27,7 @@ class TrainApplication(object):
         self.trainer = trainer(data_root=self.data_root,
                                dataset=self.dataset,
                                image_data=self.image_data,
+                               conv=self.conv,
                                task=self.task,
                                overwrite_data=self.overwrite_data,
                                model=self.model,

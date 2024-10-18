@@ -19,6 +19,7 @@ flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1',
                                     'contrast_synth', 'contrast_img', 'synth_pcl',
                                     'lt_camera_walks_v1_synth_mix'], 'Dataset for training.')
 flags.DEFINE_bool('image_data', False, 'Indicates if input is image data.')
+flags.DEFINE_bool('conv', False, 'Whether to use a convolutional encoder.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
@@ -64,6 +65,7 @@ def main(argv):
                                  data_root=FLAGS.data_root,
                                  dataset=FLAGS.dataset,
                                  image_data=FLAGS.image_data,
+                                 conv=FLAGS.conv,
                                  task=FLAGS.task,
                                  run_name=run_name,
                                  overwrite_data=FLAGS.overwrite_data,

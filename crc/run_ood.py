@@ -13,6 +13,7 @@ flags.DEFINE_enum('estimation_model', None, ['ols', 'lasso', 'mlp', 'cmvae',
                                              'contrast_crl', 'pcl'], 'Estimator to train.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
 flags.DEFINE_bool('image_data', False, 'Indicates if input is image data.')
+flags.DEFINE_bool('conv', False, 'Whether to use a convolutional encoder.')
 flags.DEFINE_enum('task', None, ['lt_1', 'lt_pcl_1'], 'Prediction task.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',
@@ -56,6 +57,7 @@ def main(argv):
                                       estimation_model=FLAGS.estimation_model,
                                       dataset=FLAGS.dataset,
                                       image_data=FLAGS.image_data,
+                                      conv=FLAGS.conv,
                                       task=FLAGS.task,
                                       data_root=FLAGS.data_root,
                                       results_root=FLAGS.output_root,
