@@ -46,7 +46,7 @@ class TrainPCL(TrainModel):
                   epochs=self.epochs,
                   random_seed=self.seed,
                   list_hidden_nodes=[8, 8] + [self.lat_dim],
-                  initial_learning_rate=0.1,
+                  initial_learning_rate=0.001,
                   momentum=0.9,
                   max_steps=None,
                   decay_steps=max(1, int(self.epochs / 2)),
