@@ -15,11 +15,14 @@ from crc.utils import get_device
 
 
 class CRLOODEstimator(OODEstimator):
-    def __init__(self, seed, image_data, conv, task, dataset, data_root, results_root, crl_model, lat_dim,
-                 batch_size,
-                 epochs, run_name,
+    def __init__(self, seed, image_data, conv, task, dataset, data_root,
+                 results_root, crl_model, lat_dim, batch_size, epochs, run_name,
                  overwrite_data=False):
-        super().__init__(seed, image_data, conv, task, data_root, results_root)
+        super().__init__(seed, task, data_root)
+        self.results_root = results_root
+
+        self.image_data = image_data
+        self.conv = conv
         self.dataset = dataset
         self.lat_dim = lat_dim
         self.batch_size = batch_size

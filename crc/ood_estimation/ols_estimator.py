@@ -11,7 +11,7 @@ from crc.ood_estimation.base_estimator import OODEstimator
 class OLSOODEstimator(OODEstimator):
     def __init__(self, seed, task, data_root):
         image_data = False
-        super().__init__(seed, image_data, task, data_root)
+        super().__init__(seed, task, data_root)
 
         self.model = LinearRegression()
 
