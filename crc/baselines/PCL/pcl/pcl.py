@@ -94,10 +94,10 @@ class Net(nn.Module):
              x: input [batch, time(t:t-p), dim]
          """
         batch_size = x.shape[0]
-        num_dim = x.shape[-1]
         if self.image_data:
             if not self.conv:
                 x = torch.flatten(x, start_dim=2)
+        num_dim = x.shape[-1]
 
         if self.conv:
             h = torch.cat((x[:, 0, ...], x[:, 1, ...]))
