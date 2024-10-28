@@ -14,7 +14,7 @@ flags.DEFINE_enum('estimation_model', None, ['ols', 'lasso', 'mlp', 'cmvae',
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
 flags.DEFINE_bool('image_data', False, 'Indicates if input is image data.')
 flags.DEFINE_bool('conv', False, 'Whether to use a convolutional encoder.')
-flags.DEFINE_enum('task', None, ['lt_1', 'lt_pcl_1'], 'Prediction task.')
+flags.DEFINE_string('task', None, 'Prediction task.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
