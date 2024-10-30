@@ -49,7 +49,7 @@ class TrainApplication(object):
     def _get_trainer(self):
         if self.model == 'cmvae':
             return TrainCMVAE
-        elif self.model == 'contrast_crl':
+        elif self.model in ('contrast_crl', 'contrast_crl_linear'):
             return TrainContrastCRL
         elif self.model == 'pcl':
             return TrainPCL

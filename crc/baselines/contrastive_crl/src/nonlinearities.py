@@ -10,6 +10,8 @@ class Linear_Nonlinearity(torch.nn.Module):
         self.A = torch.nn.Linear(input_dim, output_dim, bias=False)
 
     def forward(self, x):
+        if x.ndim > 2:
+            x = torch.flatten(x, start_dim=1)
         return self.A(x)
 
 

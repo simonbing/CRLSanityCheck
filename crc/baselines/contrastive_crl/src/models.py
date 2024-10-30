@@ -36,7 +36,7 @@ def get_contrastive_synthetic(input_dim, latent_dim, hidden_dim, hidden_layers=0
     return ContrastiveModel(latent_dim, embedding)
 
 
-def get_contrastive_linear_synthetic(input_dim, latent_dim, hidden_dim, hidden_layers=0, residual=True, **kwargs):
+def get_contrastive_linear_synthetic(input_dim, latent_dim, hidden_dim=None, hidden_layers=0, residual=True, **kwargs):
     embedding = Linear_Nonlinearity(input_dim=input_dim, output_dim=latent_dim)
     return ContrastiveModel(latent_dim, embedding)
 

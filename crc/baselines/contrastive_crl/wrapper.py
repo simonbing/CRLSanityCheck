@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader
 
 from crc.baselines.contrastive_crl.src.data_generation import ContrastiveCRLDataset
 from crc.baselines.contrastive_crl.src.utils import get_chamber_data
-from crc.baselines.contrastive_crl.src.models import get_contrastive_synthetic, get_contrastive_image
+from crc.baselines.contrastive_crl.src.models import get_contrastive_synthetic, \
+    get_contrastive_image, get_contrastive_linear_synthetic
 from crc.baselines.contrastive_crl.src.training import train_model
 
 from crc.wrappers import TrainModel, EvalModel
@@ -24,7 +25,10 @@ class TrainContrastCRL(TrainModel):
             return get_contrastive_synthetic(input_dim=20, latent_dim=self.lat_dim,
                                              hidden_dim=512, hidden_layers=0,
                                              residual=True)
-        else:
+        elif self.model == 'contrast_crl_linear':
+            return get_contrastive_linear_synthetic(input_dim=3 * 64 * 64,
+                                                    latent_dim=self.lat_dim)
+        elif self.model == 'contrast_crl':
             return get_contrastive_image(latent_dim=self.lat_dim,
                                          conv=self.conv,
                                          channels=10)
