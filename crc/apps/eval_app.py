@@ -119,7 +119,7 @@ class EvalApplication(object):
     def _get_evaluator(self):
         if self.model == 'cmvae':
             return EvalCMVAE
-        elif self.model == 'contrast_crl':
+        elif self.model in ('contrast_crl', 'contrast_crl_linear'):
             return EvalContrastCRL
         elif self.model == 'pcl':
             return EvalPCL
