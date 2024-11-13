@@ -9,7 +9,7 @@ from crc.apps import OODEstimatorApplication
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_enum('estimation_model', None, ['ols', 'lasso', 'mlp', 'cmvae',
+flags.DEFINE_enum('estimation_model', None, ['ols', 'lasso', 'mean', 'mlp', 'cmvae',
                                              'contrast_crl', 'pcl'], 'Estimator to train.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1', 'contrast_synth', 'contrast_img'], 'Dataset for training.')
 flags.DEFINE_bool('image_data', False, 'Indicates if input is image data.')

@@ -20,12 +20,12 @@ class OLSOODEstimator(OODEstimator):
         X = X.drop(columns='image_file').to_numpy()
         ###
         # experimental linear mixing of g.t. signal
-        W = np.array([[0.3, 0.1, 0.2, 0.1, 0.2],
-                      [0.5, 0.1, 0.1, 0.2, 0.1],
-                      [0.4, 0.1, 0.2, 0.1, 0.2],
-                      [0.1, 0.1, 0.1, 0.1, 0.6],
-                      [0.2, 0.1, 0.3, 0.3, 0.1]])
-        X = X @ W
+        # W = np.array([[0.3, 0.1, 0.2, 0.1, 0.2],
+        #               [0.5, 0.1, 0.1, 0.2, 0.1],
+        #               [0.4, 0.1, 0.2, 0.1, 0.2],
+        #               [0.1, 0.1, 0.1, 0.1, 0.6],
+        #               [0.2, 0.1, 0.3, 0.3, 0.1]])
+        # X = X @ W
         ###
         X_train, X_val, y_train, y_val = train_test_split(X, y,
                                                           train_size=self.train_frac,
@@ -44,12 +44,12 @@ class OLSOODEstimator(OODEstimator):
         X_ood = X_ood.drop(columns='image_file').to_numpy()
         ###
         # experimental linear mixing of gt signal
-        W = np.array([[0.3, 0.1, 0.2, 0.1, 0.2],
-                      [0.5, 0.1, 0.1, 0.2, 0.1],
-                      [0.4, 0.1, 0.2, 0.1, 0.2],
-                      [0.1, 0.1, 0.1, 0.1, 0.6],
-                      [0.2, 0.1, 0.3, 0.3, 0.1]])
-        X_ood = X_ood @ W
+        # W = np.array([[0.3, 0.1, 0.2, 0.1, 0.2],
+        #               [0.5, 0.1, 0.1, 0.2, 0.1],
+        #               [0.4, 0.1, 0.2, 0.1, 0.2],
+        #               [0.1, 0.1, 0.1, 0.1, 0.6],
+        #               [0.2, 0.1, 0.3, 0.3, 0.1]])
+        # X_ood = X_ood @ W
         ###
 
         y_hat = self.model.predict(X_ood)

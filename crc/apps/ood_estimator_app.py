@@ -6,7 +6,7 @@ import torch
 import wandb
 
 from crc.ood_estimation import get_ood_task_data, OLSOODEstimator, \
-    LassoOODEstimator, MLPOODEstimator, CRLOODEstimator
+    LassoOODEstimator, MLPOODEstimator, CRLOODEstimator, MeanEstimator
 
 
 class OODEstimatorApplication(object):
@@ -38,6 +38,9 @@ class OODEstimatorApplication(object):
         elif estimation_model == 'lasso':
             return LassoOODEstimator(seed=self.seed, task=self.task,
                                      data_root=self.data_root)
+        elif estimation_model == 'mean':
+            return MeanEstimator(seed=self.seed, task=self.task,
+                                 data_root=self.data_root)
         elif estimation_model == 'mlp':
             return MLPOODEstimator(seed=self.seed,
                                    image_data=self.image_data,
