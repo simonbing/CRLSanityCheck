@@ -9,7 +9,7 @@ from crc.apps import TrainApplication, EvalApplication
 FLAGS = flags.FLAGS
 
 flags.DEFINE_enum('model', None, ['pcl', 'cmvae', 'contrast_crl',
-                                  'contrast_crl_linear', 'rgb_baseline'],
+                                  'contrast_crl_linear', 'rgb_baseline', 'ica'],
                   'Model to train.')
 flags.DEFINE_string('output_root', '/Users/Simon/Documents/PhD/Projects/'
                                    'CausalRepresentationChambers/results',

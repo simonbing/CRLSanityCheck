@@ -3,7 +3,8 @@ import random
 import numpy as np
 import torch
 
-from crc.baselines import TrainCMVAE, TrainContrastCRL, TrainPCL, TrainRGBBaseline
+from crc.baselines import TrainCMVAE, TrainContrastCRL, TrainPCL, \
+    TrainRGBBaseline, TrainICA
 
 
 class TrainApplication(object):
@@ -55,3 +56,5 @@ class TrainApplication(object):
             return TrainPCL
         elif self.model == 'rgb_baseline':
             return TrainRGBBaseline
+        elif self.model == 'ica':
+            return TrainICA

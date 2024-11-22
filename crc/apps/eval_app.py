@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import wandb
 
-from crc.baselines import EvalCMVAE, EvalContrastCRL, EvalPCL, EvalRGBBaseline
+from crc.baselines import EvalCMVAE, EvalContrastCRL, EvalPCL, EvalRGBBaseline, EvalICA
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 from crc.baselines.PCL.pcl.utils import correlation
 from crc.eval import compute_MCC, mean_corr_coef_np, compute_SHD
@@ -29,7 +29,10 @@ class EvalApplication(object):
             os.makedirs(self.eval_dir)
 
         evaluator = self._get_evaluator()
-        trained_model_path = os.path.join(self.train_dir, 'best_model.pt')
+        if self.model == 'ica':
+            trained_model_path = os.path.join(self.train_dir, 'best_model.pkl')
+        else:
+            trained_model_path = os.path.join(self.train_dir, 'best_model.pt')
         self.evaluator = evaluator(trained_model_path=trained_model_path)
         self.metrics = metrics
 
@@ -125,3 +128,5 @@ class EvalApplication(object):
             return EvalPCL
         elif self.model == 'rgb_baseline':
             return EvalRGBBaseline
+        elif self.model == 'ica':
+            return EvalICA
