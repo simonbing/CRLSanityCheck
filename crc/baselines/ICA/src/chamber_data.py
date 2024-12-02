@@ -15,7 +15,11 @@ class ChamberDataset(Dataset):
 
         self.dataset = dataset
         self.exp, self.env_list, self.features = get_task_environments(task)
-        self.env_list = ['reference'] + self.env_list
+        if 'ref' in self.env_list:
+            # PCL data has different structure, don't need to add ref environment
+            pass
+        else:
+            self.env_list = ['reference'] + self.env_list
         self.data_root = data_root
 
         chamber_data = ChamberData(self.dataset, root=self.data_root,
