@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 
 class NpEncoder(json.JSONEncoder):
@@ -43,3 +44,20 @@ def get_task_environments(task):
         features = ['red', 'green', 'blue', 'pol_1', 'pol_2']
 
     return exp_name, env_list, features
+
+
+def train_val_test_split(*arrays, train_size, val_size=None, test_size=None, random_state):
+    train_out, intermed_out = train_test_split(*arrays, train_size=train_size,
+                                               random_state=random_state)
+
+    try:
+        val_out, test_out = train_test_split(intermed_out,
+                                             train_size=(val_size/(1-train_size)),
+                                             random_state=random_state)
+    except TypeError:
+        val_out, test_out = train_test_split(intermed_out,
+                                             test_size=(test_size/(1-train_size)),
+                                             random_state=random_state)
+
+    return train_out, val_out, test_out
+
