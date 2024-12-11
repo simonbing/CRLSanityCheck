@@ -34,6 +34,8 @@ class MultiviewIv(CRLMethod):
         self.selection = selection
         self.tau = tau
 
+        self.dataset = self._get_dataset()
+
     def _build_model(self):
         self.model = MultiviewIvModule(encoder=self.encoder).to(self.device)
 
@@ -54,103 +56,130 @@ class MultiviewIv(CRLMethod):
                             estimated_content_indices=estimated_content_indices,
                             subsets=subsets)
 
-    def train(self):
-        # Get train, val, test dataset
-        dataset = self._get_dataset()
+    def train_step(self, data):
+        data = [x.to(self.device) for x in data]
 
-        train_idxs, val_idxs, test_idxs = train_val_test_split(np.arange(len(dataset)),
-                                                               train_size=self.train_size,
-                                                               val_size=self.val_size,
-                                                               random_state=self.seed)
+        # Get encoding
+        z = self.model(data)  # (n_views, batch_size, d)
 
-        train_dataset = Subset(dataset, train_idxs)
-        val_dataset = Subset(dataset, val_idxs)
+        # Estimate content indices
+        if self.selection == 'ground_truth':
+            estimated_content_indices = self.dataset.content_indices
+        else:
+            avg_logits = z.reshape(-1, z.shape[-1]).mean(0)[None]
+            content_sizes = [len(content) for content in
+                             self.dataset.content_indices]
 
-        train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=self.batch_size)
-        val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=self.batch_size)
+            content_masks = gumbel_softmax_mask(avg_logits=avg_logits,
+                                                subsets=self.dataset.subsets,
+                                                content_sizes=content_sizes)
+            estimated_content_indices = []
+            for c_mask in content_masks:
+                c_ind = torch.where(c_mask)[-1].tolist()
+                estimated_content_indices += [c_ind]
 
-        best_val_loss = np.inf
-        best_model = copy.deepcopy(self.model)
+        loss = self.loss_f(z, estimated_content_indices,
+                           self.dataset.subsets)
 
-        # Train loop
-        for i in range(self.epochs):
-            self.model.train()
-            # Minibatch training
-            train_loss_values = []
-            for data in train_dataloader:
-                # Zero gradients
-                self.optimizer.zero_grad()
+        return loss, {'loss': loss.item()}
 
-                data = [x.to(self.device) for x in data]
-
-                # Get encoding
-                z = self.model(data)  # (n_views, batch_size, d)
-
-                # Estimate content indices
-                if self.selection == 'ground_truth':
-                    estimated_content_indices = train_dataset.dataset.content_indices
-                else:
-                    avg_logits = z.reshape(-1, z.shape[-1]).mean(0)[None]
-                    content_sizes = [len(content) for content in train_dataset.dataset.content_indices]
-
-                    content_masks = gumbel_softmax_mask(avg_logits=avg_logits,
-                                                        subsets=train_dataset.dataset.subsets,
-                                                        content_sizes=content_sizes)
-                    estimated_content_indices = []
-                    for c_mask in content_masks:
-                        c_ind = torch.where(c_mask)[-1].tolist()
-                        estimated_content_indices += [c_ind]
-
-                loss = self.loss_f(z, estimated_content_indices, train_dataset.dataset.subsets)
-                train_loss_values.append(loss.item())
-
-                wandb.log({'train_loss': loss.item()})
-
-                # Apply gradients
-                loss.backward()
-                clip_grad_norm_(self.model.parameters(), max_norm=2.0, norm_type=2)
-                self.optimizer.step()
-
-            # Validation
-            if (i+1) % self.val_step == 0 or i == (self.epochs-1):
-                self.model.eval()
-                val_loss_values = []
-                for data in val_dataloader:
-                    data = [x.to(self.device) for x in data]
-
-                    # Get encoding
-                    z = self.model(data)  # (n_views, batch_size, d)
-                    # Estimate content indices
-                    if self.selection == 'ground_truth':
-                        estimated_content_indices = train_dataset.dataset.content_indices
-                    else:
-                        avg_logits = z.reshape(-1, z.shape[-1]).mean(0)[None]
-                        content_sizes = [len(content) for content in
-                                         train_dataset.dataset.content_indices]
-
-                        content_masks = gumbel_softmax_mask(
-                            avg_logits=avg_logits,
-                            subsets=train_dataset.subsets,
-                            content_sizes=content_sizes)
-                        estimated_content_indices = []
-                        for c_mask in content_masks:
-                            c_ind = torch.where(c_mask)[-1].tolist()
-                            estimated_content_indices += [c_ind]
-
-                    loss = self.loss_f(z, estimated_content_indices,
-                                       train_dataset.dataset.subsets)
-                    wandb.log({'val_loss': loss.item()})
-
-                    val_loss_values.append(loss.item())
-
-                    if np.mean(val_loss_values) <= best_val_loss:
-                        best_val_loss = np.mean(val_loss_values)
-                        best_model = copy.deepcopy(self.model)
-
-                    # log loss
-                    # log losses
-
-        return best_model
+    # def train(self):
+    #     # Get train, val, test dataset
+    #     dataset = self._get_dataset()
+    #
+    #     train_idxs, val_idxs, test_idxs = train_val_test_split(np.arange(len(dataset)),
+    #                                                            train_size=self.train_size,
+    #                                                            val_size=self.val_size,
+    #                                                            random_state=self.seed)
+    #
+    #     train_dataset = Subset(dataset, train_idxs)
+    #     val_dataset = Subset(dataset, val_idxs)
+    #
+    #     train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=self.batch_size)
+    #     val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=self.batch_size)
+    #
+    #     best_val_loss = np.inf
+    #     best_model = copy.deepcopy(self.model)
+    #
+    #     # Train loop
+    #     for i in range(self.epochs):
+    #         self.model.train()
+    #         # Minibatch training
+    #         train_loss_values = []
+    #         for data in train_dataloader:
+    #             # Zero gradients
+    #             self.optimizer.zero_grad()
+    #
+    #             data = [x.to(self.device) for x in data]
+    #
+    #             # Get encoding
+    #             z = self.model(data)  # (n_views, batch_size, d)
+    #
+    #             # Estimate content indices
+    #             if self.selection == 'ground_truth':
+    #                 estimated_content_indices = train_dataset.dataset.content_indices
+    #             else:
+    #                 avg_logits = z.reshape(-1, z.shape[-1]).mean(0)[None]
+    #                 content_sizes = [len(content) for content in train_dataset.dataset.content_indices]
+    #
+    #                 content_masks = gumbel_softmax_mask(avg_logits=avg_logits,
+    #                                                     subsets=train_dataset.dataset.subsets,
+    #                                                     content_sizes=content_sizes)
+    #                 estimated_content_indices = []
+    #                 for c_mask in content_masks:
+    #                     c_ind = torch.where(c_mask)[-1].tolist()
+    #                     estimated_content_indices += [c_ind]
+    #
+    #             loss = self.loss_f(z, estimated_content_indices, train_dataset.dataset.subsets)
+    #             train_loss_values.append(loss.item())
+    #
+    #             wandb.log({'train_loss': loss.item()})
+    #
+    #             # Apply gradients
+    #             loss.backward()
+    #             clip_grad_norm_(self.model.parameters(), max_norm=2.0, norm_type=2)
+    #             self.optimizer.step()
+    #
+    #         # Validation
+    #         if (i+1) % self.val_step == 0 or i == (self.epochs-1):
+    #             self.model.eval()
+    #             val_loss_values = []
+    #             for data in val_dataloader:
+    #                 data = [x.to(self.device) for x in data]
+    #
+    #                 # Get encoding
+    #                 z = self.model(data)  # (n_views, batch_size, d)
+    #                 # Estimate content indices
+    #                 if self.selection == 'ground_truth':
+    #                     estimated_content_indices = train_dataset.dataset.content_indices
+    #                 else:
+    #                     avg_logits = z.reshape(-1, z.shape[-1]).mean(0)[None]
+    #                     content_sizes = [len(content) for content in
+    #                                      train_dataset.dataset.content_indices]
+    #
+    #                     content_masks = gumbel_softmax_mask(
+    #                         avg_logits=avg_logits,
+    #                         subsets=train_dataset.subsets,
+    #                         content_sizes=content_sizes)
+    #                     estimated_content_indices = []
+    #                     for c_mask in content_masks:
+    #                         c_ind = torch.where(c_mask)[-1].tolist()
+    #                         estimated_content_indices += [c_ind]
+    #
+    #                 loss = self.loss_f(z, estimated_content_indices,
+    #                                    train_dataset.dataset.subsets)
+    #                 wandb.log({'val_loss': loss.item()})
+    #
+    #                 val_loss_values.append(loss.item())
+    #
+    #                 if np.mean(val_loss_values) <= best_val_loss:
+    #                     best_val_loss = np.mean(val_loss_values)
+    #                     best_model = copy.deepcopy(self.model)
+    #
+    #                 # log loss
+    #                 # log losses
+    #
+    #     return best_model
 
 
 class MultiviewIvModule(nn.Module):
