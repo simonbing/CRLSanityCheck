@@ -45,38 +45,45 @@ class TrainMethod(object):
         torch.save(best_model, os.path.join(self.train_dir, 'best_model.pt'))
 
 
-if __name__ == '__main__':
-    SEED = 0
-    OUT_DIR = '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results'
-    METHOD = 'multiview_iv'
-    DATASET = 'lt_camera_v1'
-    TASK = 'lt_scm_2'
-    DATA_ROOT = '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads'
-    RUN_NAME = 'multiview_test_0'
-    D = 5
-    ENCODER = 'conv'
-    BS = 512
-    EPOCHS = 10
-    LR = 0.0001
+def main(argv):
+    FLAGS = flags.FLAGS
+
+    flags.DEFINE_integer('seed', 0, 'Random seed.')
+    flags.DEFINE_string('out_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
+                        'Directory to save results to.')
+    flags.DEFINE_enum('method', 'multiview_iv', ['multiview_iv', 'contrast_crl'],
+                      'Representation learning method')
+    flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1'], 'Dataset.')
+    flags.DEFINE_enum('task', 'lt_scm_2', ['lt_scm_2'], 'Experimental task.')
+    flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads',
+                        'Root directory of data.')
+    flags.DEFINE_string('run_name', None, 'Name of experimental run.')
+    flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
+    flags.DEFINE_enum('encoder', 'conv', ['fc', 'conv'], 'Encoder type.')
+    flags.DEFINE_integer('bs', 512, 'Batch size.')
+    flags.DEFINE_integer('epochs', 10, 'Training epochs.')
+    flags.DEFINE_float('lr', 0.0001, 'Learning rate.')
+    # Multiview flags
+    flags.DEFINE_integer('n_envs', 1, 'Number of interventional environments for multiview data.')
+    flags.DEFINE_enum('selection', 'ground_truth', ['ground_truth'], 'Selection for estimating content indices.')
+    flags.DEFINE_float('tau', 1.0, 'Temperature parameter for multiview loss.')
+
     # Multiview Args
-    N_ENVS = 1
-    SELECTION= 'ground_truth'
-    TAU = 1.0
-    kwarg_dict = {'n_envs': N_ENVS,
-                  'selection': SELECTION,
-                  'tau': TAU}
+    kwarg_dict = {'n_envs': FLAGS.n_envs,
+                  'selection': FLAGS.selection,
+                  'tau': FLAGS.tau}
 
     WANDB = False
 
     wandb_config = dict(
-        model=METHOD,
-        dataset=DATASET,
-        task=TASK,
-        run_name=RUN_NAME,
-        seed=SEED,
-        batch_size=BS,
-        epochs=EPOCHS,
-        lat_dim=D
+        model=FLAGS.method,
+        dataset=FLAGS.dataset,
+        task=FLAGS.task,
+        run_name=FLAGS.run_name,
+        seed=FLAGS.seed,
+        batch_size=FLAGS.bs,
+        epochs=FLAGS.epochs,
+        lat_dim=FLAGS.lat_dim
     )
 
     wandb.init(
@@ -87,8 +94,14 @@ if __name__ == '__main__':
         config=wandb_config
     )
 
-    method = TrainMethod(method=METHOD, out_dir=OUT_DIR, seed=SEED, dataset=DATASET, task=TASK,
-                         data_root=DATA_ROOT, run_name=RUN_NAME, d=D, batch_size=BS, epochs=EPOCHS,
-                         lr=LR, encoder=ENCODER, **kwarg_dict)
+    method = TrainMethod(method=FLAGS.method, out_dir=FLAGS.out_dir, seed=FLAGS.seed,
+                         dataset=FLAGS.dataset, task=FLAGS.task,
+                         data_root=FLAGS.data_set, run_name=FLAGS.run_name, d=FLAGS.lat_dim,
+                         batch_size=FLAGS.bs, epochs=FLAGS.epochs,
+                         lr=FLAGS.lr, encoder=FLAGS.encoder, **kwarg_dict)
 
-    app.run(method.run())
+    method.run()
+
+
+if __name__ == '__main__':
+    app.run(main)
