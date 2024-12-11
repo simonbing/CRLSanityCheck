@@ -12,7 +12,6 @@ from crc.methods.shared import ChambersDatasetMultiview
 from crc.methods.shared import FCEncoder, ConvEncoder
 from crc.methods.shared.losses import infonce_loss
 from crc.methods.shared.utils import gumbel_softmax_mask
-from crc.utils import train_val_test_split
 
 
 class MultiviewIv(CRLMethod):

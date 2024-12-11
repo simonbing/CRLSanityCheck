@@ -34,6 +34,8 @@ class CRLMethod(ABC):
         self.lr = lr
         self.val_step = 10
 
+        self.scheduler = None
+
     @abstractmethod
     def _build_model(self):
         raise NotImplementedError
@@ -83,8 +85,8 @@ class CRLMethod(ABC):
                 # Apply gradients
                 total_loss.backward()
                 # TODO: check if we always need gradient clipping
-                clip_grad_norm_(self.model.parameters(), max_norm=2.0,
-                                norm_type=2)
+                # clip_grad_norm_(self.model.parameters(), max_norm=2.0,
+                #                 norm_type=2)
                 self.optimizer.step()
 
             # Validation
@@ -98,8 +100,12 @@ class CRLMethod(ABC):
                         # Log losses
                         wandb.log({f'{key}_val': value for key, value in loss_dict.items()})
 
-                        if np.mean(val_loss_values) <= best_val_loss:
-                            best_val_loss = np.mean(val_loss_values)
-                            best_model = copy.deepcopy(self.model)
+                if np.mean(val_loss_values) <= best_val_loss:
+                    best_val_loss = np.mean(val_loss_values)
+                    best_model = copy.deepcopy(self.model)
+
+                # Optional lr scheduling
+                if self.scheduler is not None:
+                    self.scheduler.step(np.mean(val_loss_values))  # TODO this only works for the plateu scheduler!
 
         return best_model
