@@ -28,6 +28,7 @@ class ContrastCRL(CRLMethod):
         self.notears_loss = lambda A: torch.trace(torch.matrix_exp(A * A) - A.size(0))
 
         self.model = self._build_model()
+
         self.optimizer = self._get_optimizer()
 
         self.scheduler = ReduceLROnPlateau(self.optimizer, factor=0.3, patience=3)
@@ -35,7 +36,7 @@ class ContrastCRL(CRLMethod):
     def _build_model(self):
         return ContrastCRLModule(d=self.d, encoder=self.encoder)
 
-    def _get_dataset(self):
+    def get_dataset(self):
         match self.dataset:
             case _:
                 return ChambersDatasetContrastive(dataset=self.dataset,
@@ -43,7 +44,7 @@ class ContrastCRL(CRLMethod):
                                                   data_root=self.data_root)
 
     def train_step(self, data):
-        X_obs, X_iv, iv_idx, _, _ = data
+        X_obs, X_iv, iv_idx = data
         X_obs = X_obs.to(self.device)
         X_iv = X_iv.to(self.device)
         iv_idx = iv_idx.to(self.device)
@@ -53,10 +54,12 @@ class ContrastCRL(CRLMethod):
 
         method_specific_loss = self.kappa * torch.sum(torch.mean(z_obs, dim=0) ** 2)
 
-        classifier_loss = classifier_loss = self.ce_loss(logits_obs,
-                                                         torch.zeros(X_obs.size(0), dtype=torch.long, device=self.device)) \
-                                            + self.ce_loss(logits_iv,
-                                                           torch.ones(X_iv.size(0), dtype=torch.long, device=self.device))
+        classifier_loss = self.ce_loss(logits_obs,torch.zeros(X_obs.size(0),
+                                                              dtype=torch.long,
+                                                              device=self.device)) \
+                          + self.ce_loss(logits_iv,torch.ones(X_iv.size(0),
+                                                              dtype=torch.long,
+                                                              device=self.device))
 
         reg_loss = self.eta * torch.sum(torch.abs(self.model.A)) \
                    + self.mu * self.notears_loss(self.model.A)
@@ -67,6 +70,14 @@ class ContrastCRL(CRLMethod):
                       'method_loss': method_specific_loss.item(),
                       'classifier_loss': classifier_loss.item(),
                       'reg_loss': reg_loss.item()}
+
+    def encode_step(self, data):
+        X_obs = data[0]
+        X_obs = X_obs.to(self.device)
+
+        z = self.model.get_z(X_obs)
+
+        return z
 
 
 class ContrastCRLModule(nn.Module):

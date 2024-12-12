@@ -2,6 +2,7 @@
 Abstract base class for CRL methods.
 """
 import copy
+import random
 
 from abc import ABC, abstractmethod
 import numpy as np
@@ -10,23 +11,24 @@ from torch.utils.data import Subset, DataLoader
 from torch.nn.utils import clip_grad_norm_
 import wandb
 
-from crc.utils import get_device, train_val_test_split
+from crc.utils import get_device
 
 
 class CRLMethod(ABC):
-    def __init__(self, seed, dataset, task, data_root, d, batch_size, epochs, lr):
+    def __init__(self, seed, dataset, task, data_root, d, batch_size, epochs,
+                 lr):
         self.seed = seed
+
+        # Set all seeds
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
+        random.seed(self.seed)
 
         self.dataset = dataset
         self.task = task
         self.data_root = data_root
 
         self.d = d
-
-        # Hardcoded for all experiments
-        self.train_size = 0.8
-        self.val_size = 0.1
-        self.test_size = 0.1
 
         self.device = get_device()
         self.batch_size = batch_size
@@ -41,7 +43,7 @@ class CRLMethod(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _get_dataset(self):
+    def get_dataset(self):
         raise NotImplementedError
 
     def _get_optimizer(self):
@@ -52,15 +54,8 @@ class CRLMethod(ABC):
     def train_step(self, data):
         raise NotImplementedError
 
-    def train(self):
-        train_idxs, val_idxs, test_idxs = train_val_test_split(
-            np.arange(len(self.dataset)),
-            train_size=self.train_size,
-            val_size=self.val_size,
-            random_state=self.seed)
-
-        train_dataset = Subset(self.dataset, train_idxs)
-        val_dataset = Subset(self.dataset, val_idxs)
+    def train(self, train_dataset, val_dataset):
+        self.model = self.model.to(self.device)
 
         train_dataloader = DataLoader(train_dataset, shuffle=True,
                                       batch_size=self.batch_size)
@@ -109,3 +104,32 @@ class CRLMethod(ABC):
                     self.scheduler.step(np.mean(val_loss_values))  # TODO this only works for the plateu scheduler!
 
         return best_model
+
+    @abstractmethod
+    def encode_step(self, data):
+        raise NotImplementedError
+
+    def get_encodings(self, test_dataset):
+        self.model = self.model.to(self.device)
+        self.model.eval()
+
+        # Set eval mode to true in dataset
+        test_dataset.dataset.eval = True
+
+        train_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=2000)
+
+        z_gt_list = []
+        z_hat_list = []
+        for data in train_dataloader:
+            z_gt_batch = data[-1]  # return ground truth z last
+
+            z_hat_batch = self.encode_step(data)
+
+            z_gt_list.append(z_gt_batch)
+            z_hat_list.append(z_hat_batch)
+
+        z_gt = torch.cat(z_gt_list).cpu().detach().numpy()
+        z_hat = torch.cat(z_hat_list).cpu().detach().numpy()
+
+        return z_gt, z_hat
+

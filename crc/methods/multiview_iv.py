@@ -33,12 +33,12 @@ class MultiviewIv(CRLMethod):
         self.selection = selection
         self.tau = tau
 
-        self.dataset = self._get_dataset()
+        self.dataset = self.get_dataset()
 
     def _build_model(self):
         self.model = MultiviewIvModule(encoder=self.encoder).to(self.device)
 
-    def _get_dataset(self):
+    def get_dataset(self):
         match self.dataset:
             case _:
                 return ChambersDatasetMultiview(dataset=self.dataset,

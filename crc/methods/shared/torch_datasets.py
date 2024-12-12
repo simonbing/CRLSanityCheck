@@ -19,6 +19,7 @@ def _map_iv_envs(idx, exp, env_list):
 class ChambersDatasetContrastive(Dataset):
     def __init__(self, dataset, task, data_root):
         super().__init__()
+        self.eval = False
 
         self.data_root = data_root
         self.chamber_data_name = dataset
@@ -112,13 +113,17 @@ class ChambersDatasetContrastive(Dataset):
         Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
         Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
 
-        return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
-                               dtype=torch.float32), \
-            torch.as_tensor(iv_sample.transpose((2, 0, 1)),
-                            dtype=torch.float32), \
-            torch.as_tensor(self.iv_names[item],
-                            dtype=torch.int), \
-            Z_obs, Z_iv
+        if not self.eval:
+            return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
+                                   dtype=torch.float32), \
+                torch.as_tensor(iv_sample.transpose((2, 0, 1)),
+                                dtype=torch.float32), \
+                torch.as_tensor(self.iv_names[item],
+                                dtype=torch.int)
+        else:
+            return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
+                                   dtype=torch.float32), \
+                Z_obs
 
 
 class ChambersDatasetMultiview(Dataset):

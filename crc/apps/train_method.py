@@ -1,17 +1,22 @@
 import os
+import pickle
+import random
 
 from absl import app, flags
+import numpy as np
 import torch
+from torch.utils.data import Subset
 import wandb
 
-from crc.methods import ContrastCRL, MultiviewIv
+from crc.utils import train_val_test_split
+from crc.methods.utils import get_method
 
 
 class TrainMethod(object):
-    def __init__(self, method, out_dir, run_name, **kwargs):
+    def __init__(self, method, out_dir, run_name, overwrite=False, **kwargs):
         self.method_name = method
 
-        self.method = self._get_method(method=method)(**kwargs)
+        self.method = get_method(method=method)(**kwargs)
 
         self.model_dir = os.path.join(out_dir, kwargs['dataset'], kwargs['task'],
                                       self.method_name)
@@ -20,16 +25,7 @@ class TrainMethod(object):
         if not os.path.exists(self.train_dir):
             os.makedirs(self.train_dir)
 
-    @staticmethod
-    def _get_method(method):
-        match method:
-            case 'contrast_crl':
-                return ContrastCRL
-            case 'multiview_iv':
-                return MultiviewIv
-
-            case _:
-                AssertionError(f'Undefined method {method}!')
+        self.overwrite = overwrite
 
     def run(self):
         # Check if trained model already exists, skip training if so
@@ -37,8 +33,36 @@ class TrainMethod(object):
             print('Trained model found, skipping training!')
             return
 
+        # Get datasets and save
+        dataset = self.method.get_dataset()
+
+        # Split into train/val/test
+        train_idxs, val_idxs, test_idxs = train_val_test_split(
+            np.arange(len(dataset)),
+            train_size=0.8,  # hardcoded
+            val_size=0.1,
+            random_state=42)  # this is fixed across all wrongs, to ensure that
+                              # the same train/val/test split is used for all models
+
+        train_dataset = Subset(dataset, train_idxs)
+        val_dataset = Subset(dataset, val_idxs)
+        test_dataset = Subset(dataset, test_idxs)
+
+        train_data_path = os.path.join(self.model_dir, 'train_dataset.pkl')
+        if not os.path.exists(train_data_path) or self.overwrite:
+            with open(train_data_path, 'wb') as f:
+                pickle.dump(train_dataset, f, protocol=pickle.HIGHEST_PROTOCOL)
+        val_data_path = os.path.join(self.model_dir, 'val_dataset.pkl')
+        if not os.path.exists(val_data_path) or self.overwrite:
+            with open(val_data_path, 'wb') as f:
+                pickle.dump(val_dataset, f, protocol=pickle.HIGHEST_PROTOCOL)
+        test_data_path = os.path.join(self.model_dir, 'test_dataset.pkl')
+        if not os.path.exists(test_data_path) or self.overwrite:
+            with open(test_data_path, 'wb') as f:
+                pickle.dump(test_dataset, f, protocol=pickle.HIGHEST_PROTOCOL)
+
         # Training
-        best_model = self.method.train()
+        best_model = self.method.train(train_dataset, val_dataset)
         print('Training finished!')
 
         # Save model
