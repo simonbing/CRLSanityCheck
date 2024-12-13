@@ -16,7 +16,7 @@ from crc.utils import get_device
 
 class CRLMethod(ABC):
     def __init__(self, seed, dataset, task, data_root, d, batch_size, epochs,
-                 lr):
+                 lr, val_step=10):
         self.seed = seed
 
         # Set all seeds
@@ -34,7 +34,7 @@ class CRLMethod(ABC):
         self.batch_size = batch_size
         self.epochs = epochs
         self.lr = lr
-        self.val_step = 10
+        self.val_step = val_step
 
         self.scheduler = None
 

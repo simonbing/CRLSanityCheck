@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from crc.methods import CRLMethod
-from crc.methods.shared import ChambersDatasetContrastive
+from crc.methods.shared.torch_datasets import ChambersDatasetContrastive, ChambersDatasetContrastiveSynthetic
 from crc.methods.shared import FCEncoder, ConvEncoder
 
 
@@ -13,7 +13,8 @@ class ContrastCRL(CRLMethod):
 
         match encoder:
             case 'fc':
-                self.encoder = FCEncoder()
+                self.encoder = FCEncoder(in_dim=20, latent_dim=self.d,
+                                         hidden_dims=[512], residual=True)
             case 'conv':
                 self.encoder = ConvEncoder(latent_dim=self.d)
             case _:
@@ -38,10 +39,15 @@ class ContrastCRL(CRLMethod):
 
     def get_dataset(self):
         match self.dataset:
-            case _:
+            case a if a in ('lt_camera_v1', 'lt_camera_walks_v1'):
                 return ChambersDatasetContrastive(dataset=self.dataset,
                                                   task=self.task,
                                                   data_root=self.data_root)
+            case 'contrast_synthetic':
+                return ChambersDatasetContrastiveSynthetic(d=5, k=2)
+
+            case _:
+                raise ValueError
 
     def train_step(self, data):
         X_obs, X_iv, iv_idx = data

@@ -1,6 +1,7 @@
 from typing import List
 
 import numpy as np
+from sempler.lganm import _parse_interventions
 import torch
 
 
@@ -64,3 +65,37 @@ def gumbel_softmax_mask(avg_logits: torch.Tensor, subsets: List,
                                 tau=1.0, hard=True)
         masks += [m]
     return masks
+
+
+def sample_from_dag(W, lganm, n, do_interventions={}):
+    """
+    Taken from the Contrstive CRL code. Adaptation of the LGANM sempler sampling
+    function for different noise distributions.
+
+    Args:
+        W (np.array): Adjacency matrix of the DAG.
+        lganm (sempler.LGANM): Linear Gaussian additive noise model.
+        n (int): Number of samples to draw.
+        do_interventions (list): List of sempler do-interventions.
+
+    Returns:
+        None
+    """
+    variances = lganm.variances.copy()
+    means = lganm.means.copy()
+    if do_interventions:
+        do_interventions = _parse_interventions(do_interventions)
+        targets = do_interventions[:, 0].astype(int)
+        means[targets] = do_interventions[:, 1]
+        variances[targets] = do_interventions[:, 2]
+        W[:, targets] = 0
+
+    # Sampling by building the joint distribution
+    A = np.linalg.inv(np.eye(lganm.p) - W.T)
+
+    # Draw Gaussian noise
+    noise_variables = self.sample_noise_variables(n)
+    std_reshape = np.reshape(np.sqrt(variances), (1, self.d))
+    mean_reshape = np.reshape(means, (1, self.d))
+    noise_variables = std_reshape * noise_variables + mean_reshape
+    return (A @ noise_variables.T).T

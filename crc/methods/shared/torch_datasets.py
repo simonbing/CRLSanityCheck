@@ -3,11 +3,14 @@ import os
 from causalchamber.datasets import Dataset as ChamberData
 import numpy as np
 import pandas as pd
+from sempler.generators import dag_avg_deg
+from sempler import LGANM
 from skimage import io
 import torch
 from torch.utils.data import Dataset
 
 from crc.utils import get_task_environments
+from crc.methods.shared.architectures import FCEncoder
 
 
 def _map_iv_envs(idx, exp, env_list):
@@ -124,6 +127,73 @@ class ChambersDatasetContrastive(Dataset):
             return torch.as_tensor(obs_sample.transpose((2, 0, 1)),
                                    dtype=torch.float32), \
                 Z_obs
+
+
+class ChambersDatasetContrastiveSynthetic(Dataset):
+    def __init__(self, d, k, n=10000, x_dim=20):
+        super().__init__()
+        self.eval = False
+
+        # Sample adjacency
+        W = dag_avg_deg(p=d, k=k, w_min=0.25, w_max=1.0, random_state=42)
+        # Add signs
+        rs = np.random.RandomState(42)
+        mask = rs.binomial(n=1, p=0.5, size=W.size,).reshape(W.shape)
+        W = W - 2 * mask * W
+
+        variances_obs = rs.uniform(1.0, 2.0, size=d)
+
+        lganm = LGANM(W=W, means=np.zeros(d), variances=variances_obs, random_state=42)
+
+        # Observational samples
+        obs_samples = lganm.sample(n)
+        self.Z_obs = np.tile(obs_samples, (d, 1))
+
+        # Interventional samples
+        means_iv = np.random.uniform(1.0, 2.0, size=d)
+        mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
+        means_iv = means_iv - 2 * mask * means_iv
+        variances_iv = rs.uniform(1.0, 2.0, size=d)
+
+        iv_samples = []
+        iv_targets = []
+        for i in range(d):
+            samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
+            iv_samples.append(samples)
+            iv_targets.append(i * np.ones(n, dtype=np.int_))
+        self.Z_iv = np.concatenate(iv_samples, axis=0)
+        self.iv_targets = np.concatenate(iv_targets, axis=0)
+
+        self.transform = FCEncoder(in_dim=d, latent_dim=x_dim,
+                                   hidden_dims=[512, 512, 512], residual=False)
+
+    def __len__(self):
+        return len(self.Z_obs)
+
+    def __getitem__(self, item):
+        if not self.eval:
+            return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
+                self.transform(torch.as_tensor(self.Z_iv[item], dtype=torch.float32)), \
+                torch.as_tensor(self.iv_targets[item], dtype=torch.int)
+        else:
+            return self.transform(self.Z_obs[item]), self.Z_obs[item]
+
+
+class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
+    def __init__(self, dataset, task, data_root, transform):
+        super().__init__(dataset, task, data_root)
+
+        self.transform = transform
+
+    def __getitem__(self, item):
+        Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
+        Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
+        if not self.eval:
+            return self.transform(Z_obs), \
+                self.transform(Z_iv), \
+                torch.as_tensor(self.iv_names[item], dtype=torch.int)
+        else:
+            return self.transform(Z_obs), Z_obs
 
 
 class ChambersDatasetMultiview(Dataset):

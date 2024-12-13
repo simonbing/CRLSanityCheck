@@ -12,8 +12,8 @@ flags.DEFINE_string('out_dir',
 flags.DEFINE_enum('method', 'multiview_iv',
                   ['multiview_iv', 'contrast_crl'],
                   'Representation learning method')
-flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1'], 'Dataset.')
-flags.DEFINE_enum('task', 'lt_scm_2', ['lt_scm_2'], 'Experimental task.')
+flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1', 'contrast_synthetic'], 'Dataset.')
+flags.DEFINE_enum('task', 'lt_scm_2', ['synth_reprod', 'lt_scm_2'], 'Experimental task.')
 flags.DEFINE_string('data_root',
                     '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads',
                     'Root directory of data.')
@@ -23,6 +23,7 @@ flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
 flags.DEFINE_enum('encoder', 'conv', ['fc', 'conv'], 'Encoder type.')
 flags.DEFINE_integer('bs', 512, 'Batch size.')
 flags.DEFINE_integer('epochs', 10, 'Training epochs.')
+flags.DEFINE_integer('val_step', 10, 'Validation frequency (in epochs).')
 flags.DEFINE_float('lr', 0.0001, 'Learning rate.')
 flags.DEFINE_enum('metrics', 'mcc', ['mcc', 'shd'], 'Evaluation metrics.')
 
@@ -80,6 +81,7 @@ def main(argv):
                                d=FLAGS.lat_dim,
                                batch_size=FLAGS.bs,
                                epochs=FLAGS.epochs,
+                               val_step=FLAGS.val_step,
                                lr=FLAGS.lr,
                                encoder=FLAGS.encoder,
                                **kwarg_dict)
