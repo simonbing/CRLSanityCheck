@@ -9,7 +9,7 @@ import wandb
 
 from crc.utils import NpEncoder
 from crc.methods.utils import get_method
-from crc.baselines.contrastive_crl.src.evaluation import compute_mccs
+from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 
 
 class EvaluateMethod(object):
@@ -52,7 +52,18 @@ class EvaluateMethod(object):
             results['mcc'] = mmc_dict['mcc_s_out']
             results['mcc_lin'] = mmc_dict['mcc_w_out']
         if 'shd' in self.metrics:
-            pass
+            try:
+                W_gt = test_dataset.dataset.W
+                nr_edges = np.count_nonzero(W_gt)
+                shd_dict = evaluate_graph_metrics(
+                    W_gt,
+                    self.method.model.A.t().cpu().detach().numpy(),
+                    nr_edges=nr_edges)
+                results['shd'] = shd_dict['SHD']
+                results['shd_opt'] = shd_dict['SHD_opt']
+                results['shd_edge_match'] = shd_dict['SHD_edge_matched']
+            finally:
+                pass
 
         # Log results (before concatenation)
         for key in results:

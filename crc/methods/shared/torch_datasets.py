@@ -139,11 +139,11 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         # Add signs
         rs = np.random.RandomState(42)
         mask = rs.binomial(n=1, p=0.5, size=W.size,).reshape(W.shape)
-        W = W - 2 * mask * W
+        self.W = W - 2 * mask * W
 
         variances_obs = rs.uniform(1.0, 2.0, size=d)
 
-        lganm = LGANM(W=W, means=np.zeros(d), variances=variances_obs, random_state=42)
+        lganm = LGANM(W=self.W, means=np.zeros(d), variances=variances_obs, random_state=42)
 
         # Observational samples
         obs_samples = lganm.sample(n)
