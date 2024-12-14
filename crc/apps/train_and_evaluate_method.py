@@ -41,7 +41,7 @@ flags.DEFINE_float('tau', 1.0, 'Temperature parameter for multiview loss.')
 
 
 def main(argv):
-    WANDB = False
+    WANDB = True
 
     wandb_config = dict(
         model=FLAGS.method,
