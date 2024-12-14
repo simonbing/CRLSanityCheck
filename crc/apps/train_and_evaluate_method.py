@@ -25,7 +25,7 @@ flags.DEFINE_integer('bs', 512, 'Batch size.')
 flags.DEFINE_integer('epochs', 10, 'Training epochs.')
 flags.DEFINE_integer('val_step', 10, 'Validation frequency (in epochs).')
 flags.DEFINE_float('lr', 0.0001, 'Learning rate.')
-flags.DEFINE_list('metrics', 'mcc', ['mcc', 'shd'], 'Evaluation metrics.')
+flags.DEFINE_list('metrics', ['mcc'], 'Evaluation metrics.')
 
 # Contrast CRL flags
 flags.DEFINE_float('kappa', 0.1, 'Kappa.')
