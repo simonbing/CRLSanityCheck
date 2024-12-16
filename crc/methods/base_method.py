@@ -131,5 +131,5 @@ class CRLMethod(ABC):
         z_gt = torch.cat(z_gt_list).cpu().detach().numpy()
         z_hat = torch.cat(z_hat_list).cpu().detach().numpy()
 
-        return z_gt, z_hat
+        return np.asarray(z_gt), np.asarray(z_hat)
 
