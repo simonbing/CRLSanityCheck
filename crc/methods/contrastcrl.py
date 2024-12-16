@@ -3,7 +3,8 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from crc.methods import CRLMethod
-from crc.methods.shared.torch_datasets import ChambersDatasetContrastive, ChambersDatasetContrastiveSynthetic
+from crc.methods.shared.torch_datasets import ChambersDatasetContrastive, \
+    ChambersDatasetContrastiveSynthetic, ChambersDatasetContrastiveSemiSynthetic
 from crc.methods.shared import FCEncoder, ConvEncoder
 
 
@@ -45,7 +46,14 @@ class ContrastCRL(CRLMethod):
                                                   data_root=self.data_root)
             case 'contrast_synthetic':
                 return ChambersDatasetContrastiveSynthetic(d=5, k=2)
-
+            case 'contrast_semi_synthetic_mlp':
+                return ChambersDatasetContrastiveSemiSynthetic(
+                    dataset='lt_camera_v1',
+                    task=self.task,
+                    data_root=self.data_root,
+                    transform=FCEncoder(in_dim=5, latent_dim=20,
+                                        hidden_dims=[512, 512, 512],
+                                        residual=False))
             case _:
                 raise ValueError
 
@@ -55,8 +63,8 @@ class ContrastCRL(CRLMethod):
         X_iv = X_iv.to(self.device)
         iv_idx = iv_idx.to(self.device)
 
-        logits_obs, z_obs = self.model(X_obs, iv_idx, return_z=True)
         logits_iv = self.model(X_iv, iv_idx)
+        logits_obs, z_obs = self.model(X_obs, iv_idx, return_z=True)
 
         method_specific_loss = self.kappa * torch.sum(torch.mean(z_obs, dim=0) ** 2)
 
@@ -113,7 +121,7 @@ class ContrastCRLModule(nn.Module):
 
     def forward(self, x, k, return_z=False):
         z = self.get_z(x)
-
+        # Parametric part
         z_sel = z[torch.arange(z.size(0)), k]
         intercepts_sel = self.intercepts[k]
         lambdas_sel = self.lambdas[k]

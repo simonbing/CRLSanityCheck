@@ -190,8 +190,8 @@ class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
         Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
         Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
         if not self.eval:
-            return self.transform(Z_obs), \
-                self.transform(Z_iv), \
+            return self.transform(torch.as_tensor(Z_obs, dtype=torch.float32)), \
+                self.transform(torch.as_tensor(Z_iv, dtype=torch.float32)), \
                 torch.as_tensor(self.iv_names[item], dtype=torch.int)
         else:
             return self.transform(Z_obs), Z_obs
