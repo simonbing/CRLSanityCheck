@@ -44,25 +44,21 @@ class EvaluateMethod(object):
 
         # Get embeddings from self.method
         z, z_hat = self.method.get_encodings(test_dataset)
-        print(type(z))
-        print(type(z_hat))
-        print(type(np.asarray(z)))
-        print(isinstance(z, np.ndarray))
-        print(isinstance(np.asarray(z), np.ndarray))
 
         # Calculate metrics
         results = {}
         if 'mcc' in self.metrics:
-            mmc_dict = compute_mccs(z, z_hat)
-            results['mcc'] = mmc_dict['mcc_s_out']
-            results['mcc_lin'] = mmc_dict['mcc_w_out']
+            mcc_dict = compute_mccs(z, z_hat)
+            results['mcc'] = mcc_dict['mcc_s_out']
+            results['mcc_lin'] = mcc_dict['mcc_w_out']
         if 'shd' in self.metrics:
             try:
                 W_gt = test_dataset.dataset.W
+                W_hat = np.asarray(self.method.model.A.t().cpu().detach().numpy())
                 nr_edges = np.count_nonzero(W_gt)
                 shd_dict = evaluate_graph_metrics(
                     W_gt,
-                    self.method.model.A.t().cpu().detach().numpy(),
+                    W_hat,
                     nr_edges=nr_edges)
                 results['shd'] = shd_dict['SHD']
                 results['shd_opt'] = shd_dict['SHD_opt']
@@ -75,7 +71,7 @@ class EvaluateMethod(object):
             wandb.run.summary[key] = results[key]
 
         # Concat all results dicts, save as json
-        results_cat = results | mmc_dict
+        results_cat = results | mcc_dict
         results_path = os.path.join(self.eval_dir, 'results.json')
         with open(results_path, 'w') as outfile:
             json.dump(results_cat, outfile, indent=4, cls=NpEncoder)
