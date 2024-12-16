@@ -176,7 +176,8 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
                 self.transform(torch.as_tensor(self.Z_iv[item], dtype=torch.float32)), \
                 torch.as_tensor(self.iv_targets[item], dtype=torch.int)
         else:
-            return self.transform(self.Z_obs[item]), self.Z_obs[item]
+            return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
+                self.Z_obs[item]
 
 
 class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
