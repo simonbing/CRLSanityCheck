@@ -1,3 +1,5 @@
+import sys
+
 from absl import flags, app
 import wandb
 
@@ -41,7 +43,7 @@ flags.DEFINE_float('tau', 1.0, 'Temperature parameter for multiview loss.')
 
 
 def main(argv):
-    WANDB = True
+    gettrace = getattr(sys, 'gettrace', None)
 
     wandb_config = dict(
         model=FLAGS.method,
@@ -57,7 +59,7 @@ def main(argv):
     wandb.init(
         project='chambers',
         entity='CausalRepresentationChambers',  # this is the team name in wandb
-        mode='online' if WANDB else 'offline',  # don't log if debugging
+        mode='online' if not gettrace() else 'offline',  # don't log if debugging
         config=wandb_config
     )
 
