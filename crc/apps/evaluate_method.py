@@ -46,6 +46,9 @@ class EvaluateMethod(object):
         z, z_hat = self.method.get_encodings(test_dataset)
         print(type(z))
         print(type(z_hat))
+        print(type(np.asarray(z)))
+        print(isinstance(z, np.ndarray))
+        print(isinstance(np.asarray(z), np.ndarray))
 
         # Calculate metrics
         results = {}

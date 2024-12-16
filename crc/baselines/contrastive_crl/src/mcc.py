@@ -344,8 +344,7 @@ def mean_corr_coef(x, y, method='pearson'):
     elif isinstance(x, torch.Tensor):
         return mean_corr_coef_pt(x, y, method)
     else:
-        return mean_corr_coef_np(x, y, method)
-        # raise ValueError('not a supported input type: {}'.format(type(x)))
+        raise ValueError('not a supported input type: {}'.format(type(x)))
 
 
 def mean_corr_coef_out_of_sample(x, y, x_test, y_test, method='pearson'):
