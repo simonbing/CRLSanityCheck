@@ -1,7 +1,8 @@
 #! /usr/bin/bash
 
 # Loop over 5 random seeds
-for i in {1..5}
+#for i in {1..5}
+for SEED in 30790 20966 27426 16345 23855
 do
   SEED=$RANDOM
   sbatch cluster_gpu.sh python ../apps/train_and_evaluate_method.py --method contrast_crl \
