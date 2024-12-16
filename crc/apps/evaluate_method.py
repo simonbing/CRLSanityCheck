@@ -44,6 +44,8 @@ class EvaluateMethod(object):
 
         # Get embeddings from self.method
         z, z_hat = self.method.get_encodings(test_dataset)
+        print(type(z))
+        print(type(z_hat))
 
         # Calculate metrics
         results = {}
