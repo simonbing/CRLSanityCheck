@@ -194,10 +194,11 @@ class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
                 self.transform(torch.as_tensor(Z_iv, dtype=torch.float32)), \
                 torch.as_tensor(self.iv_names[item], dtype=torch.int)
         else:
-            return self.transform(Z_obs), Z_obs
+            return self.transform(torch.as_tensor(Z_obs, dtype=torch.float32)), \
+                torch.as_tensor(Z_obs, dtype=torch.float32)
 
 
-class ChambersDatasetMultiview(Dataset):
+class ChambersDatasetMultiviewOLD(Dataset):
     def __init__(self, dataset, task, data_root, n_envs=None):
         super().__init__()
 
@@ -309,3 +310,68 @@ class ChambersDatasetMultiview(Dataset):
         #
         # return torch.as_tensor(iv_sample.transpose((2, 0, 1)), dtype=torch.float32), \
         #     torch.as_tensor(pair_sample.transpose((2, 0, 1)), dtype=torch.float32)
+
+
+class ChambersDatasetMultiview(Dataset):
+    def __init__(self, dataset, task, data_root, include_iv_data=False):
+        super().__init__()
+
+        self.data_root = data_root
+        self.chamber_data_name = dataset
+        self.exp, self.env_list, self.features = get_task_environments(task)
+
+        assert set(self.env_list).issubset({'red', 'green', 'blue', 'pol_1', 'pol_2'})
+
+        chamber_data = ChamberData(name=self.chamber_data_name,
+                                   root=self.data_root,
+                                   download=True)
+        # Observational data
+        obs_data = chamber_data.get_experiment(
+            name=f'{self.exp}_reference').as_pandas_dataframe()
+
+        if include_iv_data:
+            pass
+        else:
+            self.data = obs_data
+
+        self.subsets = [(0, 1), (0, 2), (0, 3)]
+        self.content_indices = [[0, 1, 2], [3], [4]]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, item):
+        # View 1: image
+        img_path = os.path.join(self.data_root, self.chamber_data_name,
+                                   _map_iv_envs(0, self.exp, self.env_list),
+                                   'images_64',
+                                   self.data['image_file'].iloc[item])
+        img_sample = io.imread(img_path)
+        img_sample = img_sample / 255.0
+        view_1 = torch.as_tensor(img_sample.transpose(2, 0, 1), dtype=torch.float32)
+
+        # View 2: Current, Intensity_1, Intensity_2
+        view_2_feats = ['current', 'ir_1' 'ir_2']
+        view_2_list = [self.data[feature].iloc[item] for feature in view_2_feats]
+
+        view_2 = np.concatenate(view_2_list)
+
+        # View 3: Angle 1
+        view_3 = self.data['angle_1'].iloc[item]
+
+        # View 4: Angle 2
+        view_4 = self.data['angle_2'].iloc[item]
+
+        return view_1, view_2, view_3, view_4
+
+
+
+class ChambersDatasetMultiviewSynthetic(Dataset):
+    def __init__(self):
+        super().__init__()
+
+    def __len__(self):
+        pass
+
+    def __getitem__(self, item):
+        pass
