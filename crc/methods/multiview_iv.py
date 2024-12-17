@@ -8,43 +8,50 @@ from torch.utils.data import Subset, DataLoader
 import wandb
 
 from crc.methods import CRLMethod
-from crc.methods.shared import ChambersDatasetMultiview
+from crc.methods.shared.torch_datasets import ChambersDatasetMultiviewOLD, ChambersDatasetMultiview
 from crc.methods.shared import FCEncoder, ConvEncoder
 from crc.methods.shared.losses import infonce_loss
 from crc.methods.shared.utils import gumbel_softmax_mask
 
 
-class MultiviewIv(CRLMethod):
-    def __init__(self, n_envs, encoder, selection, tau, **kwargs):
+class Multiview(CRLMethod):
+    def __init__(self, in_dims, encoder, selection, tau, **kwargs):
         super().__init__(**kwargs)
 
-        match encoder:
-            case 'fc':
-                self.encoder = FCEncoder()
-            case 'conv':
-                self.encoder = ConvEncoder(latent_dim=self.d)
-            case _:
-                ValueError, 'Invalid encoder type passed!'
+        self.encoders = []
+        for in_dim, latent_dim, view_encoder in zip(in_dims, self.d, encoder):
+            match view_encoder:
+                case 'fc':
+                    self.encoders.append(FCEncoder(in_dim=in_dim,
+                                                   latent_dim=latent_dim,
+                                                   hidden_dims=[512, 512, 512]))
+                case 'conv':
+                    self.encoders.append(ConvEncoder(latent_dim=latent_dim))
+                case _:
+                    ValueError, 'Invalid encoder type passed!'
 
         self._build_model()
         self.optimizer = self._get_optimizer()
 
-        self.n_envs = n_envs
+        # self.n_envs = n_envs
         self.selection = selection
         self.tau = tau
 
-        self.dataset = self.get_dataset()
-
     def _build_model(self):
-        self.model = MultiviewIvModule(encoder=self.encoder).to(self.device)
+        self.model = MultiviewModule(encoders=self.encoders).to(self.device)
 
     def get_dataset(self):
         match self.dataset:
-            case _:
+            case 'lt_camera_v1':
                 return ChambersDatasetMultiview(dataset=self.dataset,
                                                 task=self.task,
                                                 data_root=self.data_root,
-                                                n_envs=self.n_envs)
+                                                include_iv_data=True)
+            case _:
+                return ChambersDatasetMultiviewOLD(dataset=self.dataset,
+                                                   task=self.task,
+                                                   data_root=self.data_root,
+                                                   n_envs=self.n_envs)
 
     def loss_f(self, z, estimated_content_indices, subsets):
         return infonce_loss(hz=z,
@@ -180,18 +187,21 @@ class MultiviewIv(CRLMethod):
     #
     #     return best_model
 
+    def encode_step(self, data):
+        pass
 
-class MultiviewIvModule(nn.Module):
-    def __init__(self, encoder):
+
+class MultiviewModule(nn.Module):
+    def __init__(self, encoders):
         super().__init__()
         # Don't have a different encoder for each view, assume they are shared
-        self.joint_encoder = encoder
+        self.encoders = nn.ModuleList(encoders)
 
     def forward(self, x):
         z_list = []
 
-        for x_view in x:
-            z_list += [self.joint_encoder(x_view)]
+        for x_view, encoder in zip(x, self.encoders):
+            z_list += [encoder(x_view)]
 
         z = torch.stack(z_list)
 

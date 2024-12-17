@@ -11,8 +11,8 @@ flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_string('out_dir',
                     '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
                     'Directory to save results to.')
-flags.DEFINE_enum('method', 'multiview_iv',
-                  ['multiview_iv', 'contrast_crl'],
+flags.DEFINE_enum('method', 'multiview',
+                  ['multiview', 'contrast_crl'],
                   'Representation learning method')
 flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1', 'contrast_synthetic', 'contrast_semi_synthetic_mlp'], 'Dataset.')
 flags.DEFINE_enum('task', 'lt_scm_2', ['synth_reprod', 'lt_scm_2'], 'Experimental task.')
@@ -37,6 +37,7 @@ flags.DEFINE_float('mu', 0.00001, 'Mu')
 # Multiview flags
 flags.DEFINE_integer('n_envs', 1,
                      'Number of interventional environments for multiview data.')
+flags.DEFINE_list('in_dims', None, 'Input dimensions for all views.')
 flags.DEFINE_enum('selection', 'ground_truth', ['ground_truth'],
                   'Selection for estimating content indices.')
 flags.DEFINE_float('tau', 1.0, 'Temperature parameter for multiview loss.')
@@ -70,6 +71,15 @@ def main(argv):
                 'kappa': FLAGS.kappa,
                 'eta': FLAGS.eta,
                 'mu': FLAGS.mu
+            }
+        case 'multiview':
+            # Hardcoding these for now
+            FLAGS.encoder = ['conv', 'fc', 'fc', 'fc']
+            FLAGS.lat_dim = [5, 3, 1, 1]
+            kwarg_dict = {
+                'in_dims': [None, 3, 1, 1],
+                'selection': FLAGS.selection,
+                'tau': FLAGS.tau
             }
 
     train_method = TrainMethod(method=FLAGS.method,
