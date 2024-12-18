@@ -15,7 +15,9 @@ class ContrastCRL(CRLMethod):
         match encoder:
             case 'fc':
                 self.encoder = FCEncoder(in_dim=20, latent_dim=self.d,
-                                         hidden_dims=[512], residual=True)
+                                         hidden_dims=[512],
+                                         relu_slope=0.2,
+                                         residual=True)
             case 'conv':
                 self.encoder = ConvEncoder(latent_dim=self.d)
             case _:
@@ -53,6 +55,7 @@ class ContrastCRL(CRLMethod):
                     data_root=self.data_root,
                     transform=FCEncoder(in_dim=5, latent_dim=20,
                                         hidden_dims=[512, 512, 512],
+                                        relu_slope=0.2,
                                         residual=False))
             case _:
                 raise ValueError

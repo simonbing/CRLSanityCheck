@@ -6,6 +6,7 @@ import pandas as pd
 from sempler.generators import dag_avg_deg
 from sempler import LGANM
 from skimage import io
+from sklearn.preprocessing import StandardScaler
 import torch
 from torch.utils.data import Dataset
 
@@ -165,7 +166,9 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         self.iv_targets = np.concatenate(iv_targets, axis=0)
 
         self.transform = FCEncoder(in_dim=d, latent_dim=x_dim,
-                                   hidden_dims=[512, 512, 512], residual=False)
+                                   hidden_dims=[512, 512, 512],
+                                   relu_slope=0.2,
+                                   residual=False)
 
     def __len__(self):
         return len(self.Z_obs)
@@ -347,6 +350,15 @@ class ChambersDatasetMultiview(Dataset):
         else:
             self.data = obs_data
             self.iv_names = np.repeat([0], len(obs_data))
+        # Get scalers for standardization
+        self.scaler_view2 = StandardScaler()
+        self.scaler_view2.fit(self.data[['current', 'ir_1', 'ir_2']])
+
+        self.scaler_view3 = StandardScaler()
+        self.scaler_view3.fit(self.data[['angle_1']])
+
+        self.scaler_view4 = StandardScaler()
+        self.scaler_view4.fit(self.data[['angle_2']])
 
         self.subsets = [(0, 1), (0, 2), (0, 3)]
         self.content_indices = [[0, 1, 2], [3], [4]]
@@ -367,18 +379,18 @@ class ChambersDatasetMultiview(Dataset):
         view_1 = torch.as_tensor(img_sample.transpose(2, 0, 1), dtype=torch.float32)
 
         # View 2: Current, Intensity_1, Intensity_2
-        view_2_feats = ['current', 'ir_1', 'ir_2']
-        view_2_list = [self.data[feature].iloc[item] for feature in view_2_feats]
+        view_2_list = self.data[['current', 'ir_1', 'ir_2']].iloc[item]
 
-        view_2 = torch.as_tensor(view_2_list, dtype=torch.float32)
+        view_2 = torch.as_tensor(self.scaler_view2.transform(np.expand_dims(view_2_list.to_numpy(), 0)),
+                                 dtype=torch.float32).squeeze()
 
         # View 3: Angle 1
-        view_3 = torch.as_tensor(self.data['angle_1'].iloc[item],
-                                 dtype=torch.float32).unsqueeze(dim=0)
+        view_3 = torch.as_tensor(self.scaler_view3.transform([[self.data['angle_1'].iloc[item]]]),
+                                 dtype=torch.float32).squeeze().unsqueeze(dim=0)
 
         # View 4: Angle 2
-        view_4 = torch.as_tensor(self.data['angle_2'].iloc[item],
-                                 dtype=torch.float32).unsqueeze(dim=0)
+        view_4 = torch.as_tensor(self.scaler_view4.transform([[self.data['angle_2'].iloc[item]]]),
+                                 dtype=torch.float32).squeeze().unsqueeze(dim=0)
 
         if not self.eval:
             return view_1, view_2, view_3, view_4

@@ -75,7 +75,6 @@ def main(argv):
         case 'multiview':
             # Hardcoding these for now
             FLAGS.encoder = ['conv', 'fc', 'fc', 'fc']
-            FLAGS.lat_dim = [5, 3, 1, 1]
             kwarg_dict = {
                 'in_dims': [None, 3, 1, 1],
                 'selection': FLAGS.selection,

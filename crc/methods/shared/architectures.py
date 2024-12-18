@@ -5,25 +5,26 @@ from torchvision.models import resnet18
 
 
 class FCEncoder(nn.Module):
-    def __init__(self, in_dim, latent_dim, hidden_dims, residual=False):
+    def __init__(self, in_dim, latent_dim, hidden_dims, residual=False,
+                 relu_slope=0.01):
         super().__init__()
 
         if not residual:
             encoder_layers = [
                 nn.Sequential(
                     nn.Linear(in_dim if i == 0 else hidden_dims[i-1], hidden_dims[i]),
-                    nn.LeakyReLU(0.2)
+                    nn.LeakyReLU(relu_slope)
                 ) for i in range(len(hidden_dims))
             ]
         else:
             encoder_layers = [
                 nn.Sequential(
                     nn.Linear(in_dim, hidden_dims[0]),
-                    nn.LeakyReLU(0.2),
+                    nn.LeakyReLU(relu_slope),
                     *[ResidualBlock(
                         nn.Sequential(
                             nn.Linear(hidden_dims[i-1], hidden_dims[i]),
-                            nn.LeakyReLU(0.2)
+                            nn.LeakyReLU(relu_slope)
                         )
                     ) for i in range(1, len(hidden_dims))]
                 )
