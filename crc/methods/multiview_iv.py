@@ -41,19 +41,17 @@ class Multiview(CRLMethod):
         self.model = MultiviewModule(encoders=self.encoders).to(self.device)
 
     def get_dataset(self):
-        match self.dataset:
+        match self.dataset_name:
             case 'lt_camera_v1':
-                dataset = ChambersDatasetMultiview(dataset=self.dataset,
+                dataset = ChambersDatasetMultiview(dataset=self.dataset_name,
                                                    task=self.task,
                                                    data_root=self.data_root,
                                                    include_iv_data=True)
             case _:
-                dataset = ChambersDatasetMultiviewOLD(dataset=self.dataset,
+                dataset = ChambersDatasetMultiviewOLD(dataset=self.dataset_name,
                                                       task=self.task,
                                                       data_root=self.data_root,
                                                       n_envs=self.n_envs)
-        self.subsets = dataset.subsets
-        self.content_indices = dataset.content_indices
 
         return dataset
 
@@ -74,14 +72,14 @@ class Multiview(CRLMethod):
 
         # Estimate content indices
         if self.selection == 'ground_truth':
-            estimated_content_indices = self.content_indices
+            estimated_content_indices = self.dataset.content_indices
         else:
             avg_logits = z.reshape(-1, z.shape[-1]).mean(0)[None]
             content_sizes = [len(content) for content in
-                             self.content_indices]
+                             self.dataset.content_indices]
 
             content_masks = gumbel_softmax_mask(avg_logits=avg_logits,
-                                                subsets=self.subsets,
+                                                subsets=self.dataset.subsets,
                                                 content_sizes=content_sizes)
             estimated_content_indices = []
             for c_mask in content_masks:
@@ -89,18 +87,21 @@ class Multiview(CRLMethod):
                 estimated_content_indices += [c_ind]
 
         loss = self.loss_f(z, estimated_content_indices,
-                           self.subsets)
+                           self.dataset.subsets)
 
         return loss, {'loss': loss.item()}
 
     def encode_step(self, data):
-        pass
+        data = [x.to(self.device) for x in data[:-1]]
+
+        z = self.model(data)
+        return z
 
 
 class MultiviewModule(nn.Module):
     def __init__(self, encoders):
         super().__init__()
-        # Don't have a different encoder for each view, assume they are shared
+
         self.encoders = nn.ModuleList(encoders)
 
     def forward(self, x):

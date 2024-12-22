@@ -41,9 +41,9 @@ class ContrastCRL(CRLMethod):
         return ContrastCRLModule(d=self.d, encoder=self.encoder)
 
     def get_dataset(self):
-        match self.dataset:
+        match self.dataset_name:
             case a if a in ('lt_camera_v1', 'lt_camera_walks_v1'):
-                return ChambersDatasetContrastive(dataset=self.dataset,
+                return ChambersDatasetContrastive(dataset=self.dataset_name,
                                                   task=self.task,
                                                   data_root=self.data_root)
             case 'contrast_synthetic':

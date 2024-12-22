@@ -34,7 +34,7 @@ class TrainMethod(object):
             return
 
         # Get datasets and save
-        dataset = self.method.get_dataset()
+        dataset = self.method.dataset
 
         # Split into train/val/test
         train_idxs, val_idxs, test_idxs = train_val_test_split(

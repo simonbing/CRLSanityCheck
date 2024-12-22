@@ -24,9 +24,11 @@ class CRLMethod(ABC):
         np.random.seed(self.seed)
         random.seed(self.seed)
 
-        self.dataset = dataset
+        self.dataset_name = dataset
         self.task = task
         self.data_root = data_root
+
+        self.dataset = self.get_dataset()
 
         self.d = d
 
@@ -66,6 +68,7 @@ class CRLMethod(ABC):
         best_model = copy.deepcopy(self.model)
 
         for epoch in range(self.epochs):
+            pass
             self.model.train()
             # Training
             for data in train_dataloader:
@@ -113,7 +116,7 @@ class CRLMethod(ABC):
         self.model = self.model.to(self.device)
         self.model.eval()
 
-        # Set eval mode to true in dataset
+        # Set eval mode to true in dataset_name
         test_dataset.dataset.eval = True
 
         train_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=2000)
@@ -128,8 +131,8 @@ class CRLMethod(ABC):
             z_gt_list.append(z_gt_batch)
             z_hat_list.append(z_hat_batch)
 
-        z_gt = torch.cat(z_gt_list).cpu().detach().numpy()
-        z_hat = torch.cat(z_hat_list).cpu().detach().numpy()
+        z_gt = torch.cat(z_gt_list, dim=-2).cpu().detach().numpy()
+        z_hat = torch.cat(z_hat_list, dim=-2).cpu().detach().numpy()
 
         return np.asarray(z_gt), np.asarray(z_hat)
 
