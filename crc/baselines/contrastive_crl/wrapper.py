@@ -92,7 +92,7 @@ class TrainContrastCRL(TrainModel):
 
         training_kwargs = {
             'epochs': self.epochs,
-            'optimizer': 'sgd',
+            'optimizer': 'adam',
             'mu': 0.00001,
             'eta': 0.0001,
             'kappa': 0.1,
