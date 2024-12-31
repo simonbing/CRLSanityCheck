@@ -3,6 +3,11 @@ import copy
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import spearmanr
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
+from sklearn.metrics import r2_score
 
 
 def compute_MCC(z_hat, z, batch_size=5000):
@@ -120,3 +125,66 @@ def compute_SHD(G, G_hat, thresh=0.3):
     shd_opt = min_shd
 
     return shd, shd_opt
+
+
+def compute_multiview_r2(z, z_hat, content_indices, subsets):
+    """
+    Args:
+        z (nd.array, (n_samples, dim)): Ground truth latents.
+        z_hat (nd.array, (n_views, n_samples, dim)): Estimated latents
+
+    Returns:
+        None
+    """
+    # Loop over all "modalities", in our case this is each view/encoder
+    # Get the relevant factors of each encoder (i.e. the content)-> actually, all latent dims are taken!
+    # Loop over aforementioned factors
+    # Loop over the subsets of views that share some content
+    # Get encodings of these subsets as well as ground truth factors
+    # Get linear and nonlinear r2 scores
+    n_views = z_hat.shape[0]
+    n_subsets = len(subsets)
+    n_factors = z.shape[1]
+
+    results_lin = np.empty((n_factors, n_subsets, n_views))
+    results_lin[:] = np.nan
+
+    results_nonlin = np.empty((n_factors, n_subsets, n_views))
+    results_nonlin[:] = np.nan
+
+    for i in range(n_factors):
+        # TODO: think if we want to only take the content factors as targets (ie loop over subsets)
+        target_factor = z[:, i]
+        for j, subset in enumerate(subsets):
+            for view_idx in subset:
+                source_factors = z_hat[view_idx, :, content_indices[j]]
+                # Split into train test
+                source_train, source_test, target_train, target_test = \
+                    train_test_split(source_factors.T, target_factor, test_size=0.2)
+                # Standardize encodings
+                scaler = StandardScaler()
+                source_train = scaler.fit_transform(source_train)
+                source_test = scaler.transform(source_test)
+
+                # Linear
+                lin_reg = LinearRegression(n_jobs=-1)
+                lin_reg.fit(source_train, target_train)
+
+                results_lin[i, j, view_idx] = r2_score(target_test,
+                                                       lin_reg.predict(source_test))
+
+                # Nonlinear
+                nonlin_reg = MLPRegressor(max_iter=1000)
+                nonlin_reg.fit(source_train, target_train)
+
+                results_nonlin[i, j, view_idx] = r2_score(target_test,
+                                                          nonlin_reg.predict(source_test))
+
+    # Average results over views within one subset
+    avg_results_lin = np.nanmean(results_lin, axis=-1)
+    avg_results_nonlin = np.nanmean(results_nonlin, axis=-1)
+
+    return {'r2_lin': results_lin,
+            'r2_nonlin': results_nonlin,
+            'avg_r2_lin': avg_results_lin,
+            'avg_r2_nonlin': avg_results_nonlin}

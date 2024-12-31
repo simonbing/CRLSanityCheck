@@ -68,7 +68,6 @@ class CRLMethod(ABC):
         best_model = copy.deepcopy(self.model)
 
         for epoch in range(self.epochs):
-            pass
             self.model.train()
             # Training
             for data in train_dataloader:

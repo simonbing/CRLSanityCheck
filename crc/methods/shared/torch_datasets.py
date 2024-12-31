@@ -352,16 +352,20 @@ class ChambersDatasetMultiview(Dataset):
             self.iv_names = np.repeat([0], len(obs_data))
         # Get scalers for standardization
         self.scaler_view2 = StandardScaler()
-        self.scaler_view2.fit(self.data[['current', 'ir_1', 'ir_2']])
+        self.scaler_view2.fit(self.data[['current', 'ir_1', 'ir_2']].values)
 
         self.scaler_view3 = StandardScaler()
-        self.scaler_view3.fit(self.data[['angle_1']])
+        self.scaler_view3.fit(self.data[['angle_1']].values)
 
         self.scaler_view4 = StandardScaler()
-        self.scaler_view4.fit(self.data[['angle_2']])
+        self.scaler_view4.fit(self.data[['angle_2']].values)
 
         self.subsets = [(0, 1), (0, 2), (0, 3)]
         self.content_indices = [[0, 1, 2], [3], [4]]
+
+        # (Standardized) ground truth factors
+        scaler_Z = StandardScaler()
+        self.Z = scaler_Z.fit_transform(self.data[self.features].values)
 
     def __len__(self):
         return len(self.data)
@@ -396,7 +400,7 @@ class ChambersDatasetMultiview(Dataset):
             return view_1, view_2, view_3, view_4
         else:
             return view_1, view_2, view_3, view_4, \
-                torch.as_tensor(self.data[self.features].iloc[item])
+                torch.as_tensor(self.Z[item], dtype=torch.float32)
 
 
 class ChambersDatasetMultiviewSynthetic(Dataset):
