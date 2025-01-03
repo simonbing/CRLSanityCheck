@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from torch.utils.data import Subset, DataLoader
 from torch.nn.utils import clip_grad_norm_
+from tqdm import tqdm
 import wandb
 
 from crc.utils import get_device
@@ -67,7 +68,7 @@ class CRLMethod(ABC):
         best_val_loss = np.inf
         best_model = copy.deepcopy(self.model)
 
-        for epoch in range(self.epochs):
+        for epoch in tqdm(range(self.epochs)):
             self.model.train()
             # Training
             for data in train_dataloader:
