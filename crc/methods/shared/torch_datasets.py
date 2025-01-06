@@ -439,7 +439,7 @@ class ChambersDatasetMultiviewSynthetic(Dataset):
         # Apply mixing functions
         self.x_0 = self.enc_view_0(
             torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
-                            dtype=torch.float32))
+                            dtype=torch.float32)).cpu().detach().numpy()
         self.x_1 = self.enc_view_1(
             torch.as_tensor(self.Z[:, [0, 1, 2]],
                             dtype=torch.float32))
