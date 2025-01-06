@@ -12,6 +12,7 @@ from torch.utils.data import Dataset
 
 from crc.utils import get_task_environments
 from crc.methods.shared.architectures import FCEncoder
+from crc.methods.shared.utils import construct_invertible_mlp
 
 
 def _map_iv_envs(idx, exp, env_list):
@@ -404,14 +405,69 @@ class ChambersDatasetMultiview(Dataset):
 
 
 class ChambersDatasetMultiviewSynthetic(Dataset):
-    def __init__(self):
+    def __init__(self, d=5, n=10000):
         super().__init__()
+        self.eval = False
+
+        self.n = n
+
+        # Sample ground truth latents
+        rs = np.random.RandomState(42)
+        self.Z = rs.multivariate_normal(mean=np.zeros(d), cov=np.eye(d), size=n)
+
+        self.subsets = [(0, 1), (0, 2), (0, 3)]
+        self.content_indices = [[0, 1, 2], [2, 4], [0, 3]]
+
+        # Sample mixing functions
+        self.enc_view_0 = construct_invertible_mlp(n=5,
+                                                   n_layers=3,
+                                                   n_iter_cond_thresh=25000,
+                                                   cond_thresh_ratio=0.001)
+        self.enc_view_1 = construct_invertible_mlp(n=3,
+                                                   n_layers=3,
+                                                   n_iter_cond_thresh=25000,
+                                                   cond_thresh_ratio=0.001)
+        self.enc_view_2 = construct_invertible_mlp(n=2,
+                                                   n_layers=3,
+                                                   n_iter_cond_thresh=25000,
+                                                   cond_thresh_ratio=0.001)
+        self.enc_view_3 = construct_invertible_mlp(n=2,
+                                                   n_layers=3,
+                                                   n_iter_cond_thresh=25000,
+                                                   cond_thresh_ratio=0.001)
+
+        # Apply mixing functions
+        self.x_0 = self.enc_view_0(
+            torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
+                            dtype=torch.float32))
+        self.x_1 = self.enc_view_1(
+            torch.as_tensor(self.Z[:, [0, 1, 2]],
+                            dtype=torch.float32))
+        self.x_2 = self.enc_view_2(
+            torch.as_tensor(self.Z[:, [2, 4]],
+                            dtype=torch.float32))
+        self.x_3 = self.enc_view_3(
+            torch.as_tensor(self.Z[:, [0, 3]],
+                            dtype=torch.float32))
+
+        # Standardize latents
+        self.scaler_view0 = StandardScaler()
+        self.x_0 = torch.as_tensor(self.scaler_view0.fit_transform(self.x_0), dtype=torch.float32)
+        self.scaler_view1 = StandardScaler()
+        self.x_1 = torch.as_tensor(self.scaler_view1.fit_transform(self.x_1), dtype=torch.float32)
+        self.scaler_view2 = StandardScaler()
+        self.x_2 = torch.as_tensor(self.scaler_view2.fit_transform(self.x_2), dtype=torch.float32)
+        self.scaler_view3 = StandardScaler()
+        self.x_3 = torch.as_tensor(self.scaler_view3.fit_transform(self.x_3), dtype=torch.float32)
 
     def __len__(self):
-        pass
+        return self.n
 
     def __getitem__(self, item):
-        pass
+        if not self.eval:
+            return self.x_0[item], self.x_1[item], self.x_2[item], self.x_3[item]
+        else:
+            return self.x_0[item], self.x_1[item], self.x_2[item], self.x_3[item], self.Z[item]
 
 
 class ChambersDatasetMultiviewSemisynthetic(ChambersDatasetMultiview):

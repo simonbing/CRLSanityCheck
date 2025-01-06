@@ -83,8 +83,8 @@ class CRLMethod(ABC):
                 # Apply gradients
                 total_loss.backward()
                 # TODO: check if we always need gradient clipping
-                # clip_grad_norm_(self.model.parameters(), max_norm=2.0,
-                #                 norm_type=2)
+                clip_grad_norm_(self.model.parameters(), max_norm=2.0,
+                                norm_type=2)
                 self.optimizer.step()
 
             # Validation

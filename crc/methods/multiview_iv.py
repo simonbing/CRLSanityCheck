@@ -9,7 +9,7 @@ import wandb
 
 from crc.methods import CRLMethod
 from crc.methods.shared.torch_datasets import ChambersDatasetMultiviewOLD, \
-    ChambersDatasetMultiview, ChambersDatasetMultiviewSemisynthetic
+    ChambersDatasetMultiview, ChambersDatasetMultiviewSemisynthetic, ChambersDatasetMultiviewSynthetic
 from crc.methods.shared import FCEncoder, ConvEncoder
 from crc.methods.shared.losses import infonce_loss
 from crc.methods.shared.utils import gumbel_softmax_mask
@@ -25,7 +25,7 @@ class Multiview(CRLMethod):
                 case 'fc':
                     self.encoders.append(FCEncoder(in_dim=in_dim,
                                                    latent_dim=self.d,
-                                                   hidden_dims=[512, 512, 512]))
+                                                   hidden_dims=[64, 256, 256, 256, 256, 64]))
                 case 'conv':
                     self.encoders.append(ConvEncoder(latent_dim=self.d))
                 case _:
@@ -70,6 +70,8 @@ class Multiview(CRLMethod):
                     include_iv_data=True,
                     transform_list=mlp_list
                 )
+            case 'multiview_synthetic':
+                dataset = ChambersDatasetMultiviewSynthetic(d=5, n=100000)
             case _:
                 dataset = ChambersDatasetMultiviewOLD(dataset=self.dataset_name,
                                                       task=self.task,
