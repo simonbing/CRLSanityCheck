@@ -412,3 +412,35 @@ class ChambersDatasetMultiviewSynthetic(Dataset):
 
     def __getitem__(self, item):
         pass
+
+
+class ChambersDatasetMultiviewSemisynthetic(ChambersDatasetMultiview):
+    def __init__(self, dataset, task, data_root, transform_list, include_iv_data=False):
+        super().__init__(dataset, task, data_root, include_iv_data)
+
+        self.transform_view_1, self.transform_view_2, \
+            self.transform_view_3, self.transform_view_4 = transform_list
+
+    def __getitem__(self, item):
+        # View 1: image
+        z_view_1 = self.data[self.features].iloc[item]
+        view_1 = self.transform_view_1(torch.as_tensor(z_view_1, dtype=torch.float32))
+
+        # View 2: Current, Intensity_1, Intensity_2
+        z_view_2 = self.data[['red', 'green', 'blue']].iloc[item]
+        view_2 = self.transform_view_2(torch.as_tensor(z_view_2, dtype=torch.float32))
+
+        # View 3: Angle 1
+        z_view_3 = self.data['pol_1'].iloc[item]
+        view_3 = self.transform_view_3(torch.as_tensor(z_view_3, dtype=torch.float32))
+
+        # View 4: Angle 2
+        z_view_4 = self.data['pol_2'].iloc[item]
+        view_4 = self.transform_view_4(torch.as_tensor(z_view_4, dtype=torch.float32))
+
+        if not self.eval:
+            return view_1, view_2, view_3, view_4
+        else:
+            return view_1, view_2, view_3, view_4, \
+                torch.as_tensor(self.Z[item], dtype=torch.float32)
+

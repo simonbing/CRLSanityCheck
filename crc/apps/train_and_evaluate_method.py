@@ -14,7 +14,7 @@ flags.DEFINE_string('out_dir',
 flags.DEFINE_enum('method', 'multiview',
                   ['multiview', 'contrast_crl'],
                   'Representation learning method')
-flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1', 'contrast_synthetic', 'contrast_semi_synthetic_mlp'], 'Dataset.')
+flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1', 'contrast_synthetic', 'contrast_semi_synthetic_mlp', 'multiview_semi_synthetic_mlp'], 'Dataset.')
 flags.DEFINE_enum('task', 'lt_scm_2', ['synth_reprod', 'lt_scm_2'], 'Experimental task.')
 flags.DEFINE_string('data_root',
                     '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads',
@@ -74,12 +74,20 @@ def main(argv):
             }
         case 'multiview':
             # Hardcoding these for now
-            FLAGS.encoder = ['conv', 'fc', 'fc', 'fc']
-            kwarg_dict = {
-                'in_dims': [None, 3, 1, 1],
-                'selection': FLAGS.selection,
-                'tau': FLAGS.tau
-            }
+            if FLAGS.dataset == 'multiview_semi_synthetic_mlp':
+                FLAGS.encoder = ['fc', 'fc', 'fc', 'fc']
+                kwarg_dict = {
+                    'in_dims': [5, 3, 1, 1],
+                    'selection': FLAGS.selection,
+                    'tau': FLAGS.tau
+                }
+            else:
+                FLAGS.encoder = ['conv', 'fc', 'fc', 'fc']
+                kwarg_dict = {
+                    'in_dims': [None, 3, 1, 1],
+                    'selection': FLAGS.selection,
+                    'tau': FLAGS.tau
+                }
 
     train_method = TrainMethod(method=FLAGS.method,
                                out_dir=FLAGS.out_dir,

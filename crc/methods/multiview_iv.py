@@ -8,7 +8,8 @@ from torch.utils.data import Subset, DataLoader
 import wandb
 
 from crc.methods import CRLMethod
-from crc.methods.shared.torch_datasets import ChambersDatasetMultiviewOLD, ChambersDatasetMultiview
+from crc.methods.shared.torch_datasets import ChambersDatasetMultiviewOLD, \
+    ChambersDatasetMultiview, ChambersDatasetMultiviewSemisynthetic
 from crc.methods.shared import FCEncoder, ConvEncoder
 from crc.methods.shared.losses import infonce_loss
 from crc.methods.shared.utils import gumbel_softmax_mask
@@ -47,6 +48,28 @@ class Multiview(CRLMethod):
                                                    task=self.task,
                                                    data_root=self.data_root,
                                                    include_iv_data=True)
+            case 'multiview_semi_synthetic_mlp':
+                mlp_list = [
+                    FCEncoder(in_dim=5, latent_dim=20,
+                              hidden_dims=[512, 512, 512], relu_slope=0.2,
+                              residual=False),
+                    FCEncoder(in_dim=3, latent_dim=3,
+                              hidden_dims=[512, 512], relu_slope=0.2,
+                              residual=False),
+                    FCEncoder(in_dim=1, latent_dim=1,
+                              hidden_dims=[512, 512], relu_slope=0.2,
+                              residual=False),
+                    FCEncoder(in_dim=1, latent_dim=1,
+                              hidden_dims=[512, 512], relu_slope=0.2,
+                              residual=False)
+                ]
+                dataset = ChambersDatasetMultiviewSemisynthetic(
+                    dataset='lt_camera_v1',
+                    task=self.task,
+                    data_root=self.data_root,
+                    include_iv_data=True,
+                    transform_list=mlp_list
+                )
             case _:
                 dataset = ChambersDatasetMultiviewOLD(dataset=self.dataset_name,
                                                       task=self.task,
