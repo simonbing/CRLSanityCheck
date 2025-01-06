@@ -451,14 +451,22 @@ class ChambersDatasetMultiviewSynthetic(Dataset):
                             dtype=torch.float32))
 
         # Standardize latents
-        self.scaler_view0 = StandardScaler()
-        self.x_0 = torch.as_tensor(self.scaler_view0.fit_transform(self.x_0), dtype=torch.float32)
-        self.scaler_view1 = StandardScaler()
-        self.x_1 = torch.as_tensor(self.scaler_view1.fit_transform(self.x_1), dtype=torch.float32)
-        self.scaler_view2 = StandardScaler()
-        self.x_2 = torch.as_tensor(self.scaler_view2.fit_transform(self.x_2), dtype=torch.float32)
-        self.scaler_view3 = StandardScaler()
-        self.x_3 = torch.as_tensor(self.scaler_view3.fit_transform(self.x_3), dtype=torch.float32)
+        self.x_0 = (self.x_0 - torch.mean(self.x_0, dim=0)) / torch.std(
+            self.x_0, dim=0)
+        self.x_1 = (self.x_1 - torch.mean(self.x_1, dim=0)) / torch.std(
+            self.x_1, dim=0)
+        self.x_2 = (self.x_2 - torch.mean(self.x_2, dim=0)) / torch.std(
+            self.x_2, dim=0)
+        self.x_3 = (self.x_1 - torch.mean(self.x_3, dim=0)) / torch.std(
+            self.x_3, dim=0)
+        # self.scaler_view0 = StandardScaler()
+        # self.x_0 = torch.as_tensor(self.scaler_view0.fit_transform(self.x_0), dtype=torch.float32)
+        # self.scaler_view1 = StandardScaler()
+        # self.x_1 = torch.as_tensor(self.scaler_view1.fit_transform(self.x_1), dtype=torch.float32)
+        # self.scaler_view2 = StandardScaler()
+        # self.x_2 = torch.as_tensor(self.scaler_view2.fit_transform(self.x_2), dtype=torch.float32)
+        # self.scaler_view3 = StandardScaler()
+        # self.x_3 = torch.as_tensor(self.scaler_view3.fit_transform(self.x_3), dtype=torch.float32)
 
     def __len__(self):
         return self.n
