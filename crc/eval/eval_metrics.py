@@ -3,9 +3,10 @@ import copy
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.stats import spearmanr
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
+from sklearn import kernel_ridge
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import r2_score
 
@@ -142,7 +143,7 @@ def compute_multiview_r2(z, z_hat, content_indices, subsets):
     # Loop over the subsets of views that share some content
     # Get encodings of these subsets as well as ground truth factors
     # Get linear and nonlinear r2 scores
-    n_views = z_hat.shape[0]
+    n_views = len(z_hat)
     n_subsets = len(subsets)
     n_factors = z.shape[1]
 
@@ -158,6 +159,9 @@ def compute_multiview_r2(z, z_hat, content_indices, subsets):
         for j, subset in enumerate(subsets):
             for view_idx in subset:
                 source_factors = z_hat[view_idx, :, content_indices[j]]
+                # source_factors = z_hat[view_idx, :, :]
+                # Alternative when each encoder has a different size
+                # source_factors = z_hat[view_idx]
                 # Split into train test
                 source_train, source_test, target_train, target_test = \
                     train_test_split(source_factors.T, target_factor, test_size=0.2)
@@ -174,7 +178,19 @@ def compute_multiview_r2(z, z_hat, content_indices, subsets):
                                                        lin_reg.predict(source_test))
 
                 # Nonlinear
-                nonlin_reg = MLPRegressor(max_iter=1000)
+                # Grid search: time and memory intensive
+                # nonlin_reg = GridSearchCV(
+                #     kernel_ridge.KernelRidge(kernel="rbf", gamma=0.1),
+                #     param_grid={
+                #         "alpha": [1e0, 0.1, 1e-2, 1e-3],
+                #         "gamma": np.logspace(-2, 2, 4),
+                #     },
+                #     cv=3,
+                #     n_jobs=-1,
+                # )
+
+                # Lightweight option
+                nonlin_reg = MLPRegressor(max_iter=1000, random_state=42)
                 nonlin_reg.fit(source_train, target_train)
 
                 results_nonlin[i, j, view_idx] = r2_score(target_test,
