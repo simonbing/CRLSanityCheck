@@ -116,7 +116,7 @@ class CRLMethod(ABC):
         self.model = self.model.to(self.device)
         self.model.eval()
 
-        # Set eval mode to true in dataset_name
+        # Set eval mode to true in dataset
         test_dataset.dataset.eval = True
 
         train_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=2000)
