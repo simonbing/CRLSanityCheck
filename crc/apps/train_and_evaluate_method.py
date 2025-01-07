@@ -87,7 +87,8 @@ def main(argv):
             elif FLAGS.dataset == 'multiview_synthetic':
                 FLAGS.encoder = ['fc', 'fc', 'fc', 'fc']
                 kwarg_dict = {
-                    'in_dims': [5, 3, 2, 2],
+                    # 'in_dims': [5, 3, 2, 2],
+                    'in_dims': [5, 5, 5, 5],  # Reproduce
                     'selection': FLAGS.selection,
                     'tau': FLAGS.tau
                 }
