@@ -13,4 +13,6 @@
 source ~/.bashrc
 source activate crc
 
+CUDA_LAUNCH_BLOCKING=1
+
 "$@"
