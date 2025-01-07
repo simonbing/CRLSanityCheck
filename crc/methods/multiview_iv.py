@@ -71,7 +71,7 @@ class Multiview(CRLMethod):
                     transform_list=mlp_list
                 )
             case 'multiview_synthetic':
-                dataset = ChambersDatasetMultiviewSynthetic(d=5, n=200000)
+                dataset = ChambersDatasetMultiviewSynthetic(d=5, n=100000)
             case _:
                 dataset = ChambersDatasetMultiviewOLD(dataset=self.dataset_name,
                                                       task=self.task,
@@ -82,7 +82,8 @@ class Multiview(CRLMethod):
 
     def loss_f(self, z, estimated_content_indices, subsets):
         return infonce_loss(hz=z,
-                            sim_metric=torch.nn.CosineSimilarity(dim=-1),
+                            # sim_metric=torch.nn.CosineSimilarity(dim=-1),
+                            sim_metric=torch.nn.PairwiseDistance(),
                             criterion=torch.nn.CrossEntropyLoss(),
                             projector=(lambda x: x),
                             tau=self.tau,
