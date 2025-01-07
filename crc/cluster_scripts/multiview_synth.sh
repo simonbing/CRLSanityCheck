@@ -1,5 +1,7 @@
 #! /usr/bin/bash
 
+CUDA_LAUNCH_BLOCKING=1
+
 # Loop over 5 random seeds
 for i in {1..5}
 do
