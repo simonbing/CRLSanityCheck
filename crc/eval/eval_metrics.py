@@ -128,7 +128,7 @@ def compute_SHD(G, G_hat, thresh=0.3):
     return shd, shd_opt
 
 
-def compute_multiview_r2(z, z_hat, content_indices, subsets):
+def compute_multiview_r2(z, z_hat, content_indices, subsets, seed=42):
     """
     Args:
         z (nd.array, (n_samples, dim)): Ground truth latents.
@@ -190,7 +190,7 @@ def compute_multiview_r2(z, z_hat, content_indices, subsets):
                 # )
 
                 # Lightweight option
-                nonlin_reg = MLPRegressor(max_iter=1000, random_state=42)
+                nonlin_reg = MLPRegressor(max_iter=1000, random_state=seed)
                 nonlin_reg.fit(source_train, target_train)
 
                 results_nonlin[i, j, view_idx] = r2_score(target_test,
