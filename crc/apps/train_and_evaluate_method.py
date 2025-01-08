@@ -17,7 +17,7 @@ flags.DEFINE_enum('method', 'multiview',
 flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1', 'contrast_synthetic',
                                               'contrast_semi_synthetic_mlp',
                                               'multiview_semi_synthetic_mlp',
-                                              'multiview_synthetic', 'multiview_synthetic_reprod'], 'Dataset.')
+                                              'multiview_synthetic', 'multiview_synthetic_2', 'multiview_synthetic_reprod'], 'Dataset.')
 flags.DEFINE_enum('task', 'lt_scm_2', ['synth_reprod', 'lt_scm_2'], 'Experimental task.')
 flags.DEFINE_string('data_root',
                     '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/data/chamber_downloads',
@@ -88,6 +88,13 @@ def main(argv):
                 FLAGS.encoder = ['fc', 'fc', 'fc', 'fc']
                 kwarg_dict = {
                     'in_dims': [5, 3, 2, 2],
+                    'selection': FLAGS.selection,
+                    'tau': FLAGS.tau
+                }
+            elif FLAGS.dataset == 'multiview_synthetic_2':
+                FLAGS.encoder = ['fc', 'fc', 'fc']
+                kwarg_dict = {
+                    'in_dims': [2, 2, 2],
                     'selection': FLAGS.selection,
                     'tau': FLAGS.tau
                 }
