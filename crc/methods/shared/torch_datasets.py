@@ -468,15 +468,15 @@ class ChambersDatasetMultiviewSynthetic(Dataset):
                 self.subsets = [(0, 1), (0, 2), (1, 2)]
                 self.content_indices = [[0], [1], [2]]
 
-                self.enc_view_0 = construct_invertible_mlp(n=3,
+                self.enc_view_0 = construct_invertible_mlp(n=2,
                                                            n_layers=3,
                                                            n_iter_cond_thresh=25000,
                                                            cond_thresh_ratio=0.001)
-                self.enc_view_1 = construct_invertible_mlp(n=3,
+                self.enc_view_1 = construct_invertible_mlp(n=2,
                                                            n_layers=3,
                                                            n_iter_cond_thresh=25000,
                                                            cond_thresh_ratio=0.001)
-                self.enc_view_2 = construct_invertible_mlp(n=3,
+                self.enc_view_2 = construct_invertible_mlp(n=2,
                                                            n_layers=3,
                                                            n_iter_cond_thresh=25000,
                                                            cond_thresh_ratio=0.001)
