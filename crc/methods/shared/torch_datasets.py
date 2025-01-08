@@ -405,103 +405,108 @@ class ChambersDatasetMultiview(Dataset):
 
 
 class ChambersDatasetMultiviewSynthetic(Dataset):
-    def __init__(self, d=5, n=10000):
+    def __init__(self, d=5, n=10000, gt_model='model_1'):
         super().__init__()
         self.eval = False
 
         self.n = n
 
+        self.gt_model = gt_model
+
         # Sample ground truth latents
         rs = np.random.RandomState(42)
         self.Z = rs.multivariate_normal(mean=np.zeros(d), cov=np.eye(d), size=n)
 
-        # self.subsets = [(0, 1), (0, 2), (0, 3)]
-        # self.content_indices = [[0, 1, 2], [2, 4], [0, 3]]
+        match self.gt_model:
+            case 'model_1':
+                self.subsets = [(0, 1), (0, 2), (0, 3)]
+                self.content_indices = [[0, 1, 2], [2, 4], [0, 3]]
 
-        # # Sample mixing functions
-        # self.enc_view_0 = construct_invertible_mlp(n=5,
-        #                                            n_layers=3,
-        #                                            n_iter_cond_thresh=25000,
-        #                                            cond_thresh_ratio=0.001)
-        # self.enc_view_1 = construct_invertible_mlp(n=3,
-        #                                            n_layers=3,
-        #                                            n_iter_cond_thresh=25000,
-        #                                            cond_thresh_ratio=0.001)
-        # self.enc_view_2 = construct_invertible_mlp(n=2,
-        #                                            n_layers=3,
-        #                                            n_iter_cond_thresh=25000,
-        #                                            cond_thresh_ratio=0.001)
-        # self.enc_view_3 = construct_invertible_mlp(n=2,
-        #                                            n_layers=3,
-        #                                            n_iter_cond_thresh=25000,
-        #                                            cond_thresh_ratio=0.001)
-        #
-        # # Apply mixing functions
-        # self.x_0 = self.enc_view_0(
-        #     torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
-        #                     dtype=torch.float32))
-        # self.x_1 = self.enc_view_1(
-        #     torch.as_tensor(self.Z[:, [0, 1, 2]],
-        #                     dtype=torch.float32))
-        # self.x_2 = self.enc_view_2(
-        #     torch.as_tensor(self.Z[:, [2, 4]],
-        #                     dtype=torch.float32))
-        # self.x_3 = self.enc_view_3(
-        #     torch.as_tensor(self.Z[:, [0, 3]],
-        #                     dtype=torch.float32))
-        #
-        # # Standardize latents
-        # self.x_0 = (self.x_0 - torch.mean(self.x_0, dim=0)) / torch.std(
-        #     self.x_0, dim=0)
-        # self.x_1 = (self.x_1 - torch.mean(self.x_1, dim=0)) / torch.std(
-        #     self.x_1, dim=0)
-        # self.x_2 = (self.x_2 - torch.mean(self.x_2, dim=0)) / torch.std(
-        #     self.x_2, dim=0)
-        # self.x_3 = (self.x_3 - torch.mean(self.x_3, dim=0)) / torch.std(
-        #     self.x_3, dim=0)
+                # Sample mixing functions
+                self.enc_view_0 = construct_invertible_mlp(n=5,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_1 = construct_invertible_mlp(n=3,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_2 = construct_invertible_mlp(n=2,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_3 = construct_invertible_mlp(n=2,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
 
-        # Ground truth setting from original paper
-        self.subsets = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3), (0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3), (0, 1, 2, 3)]
-        self.content_indices = [[0, 1, 2, 4], [0, 1, 2, 3], [0, 1, 3, 4], [0, 1, 2, 5], [0, 1, 4, 5], [0, 1, 3, 5], [0, 1, 2], [0, 1, 4], [0, 1, 3], [0, 1, 5], [0, 1]]
+                # Apply mixing functions
+                self.x_0 = self.enc_view_0(
+                    torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
+                                    dtype=torch.float32))
+                self.x_1 = self.enc_view_1(
+                    torch.as_tensor(self.Z[:, [0, 1, 2]],
+                                    dtype=torch.float32))
+                self.x_2 = self.enc_view_2(
+                    torch.as_tensor(self.Z[:, [2, 4]],
+                                    dtype=torch.float32))
+                self.x_3 = self.enc_view_3(
+                    torch.as_tensor(self.Z[:, [0, 3]],
+                                    dtype=torch.float32))
 
-        self.enc_view_0 = construct_invertible_mlp(n=5,
-                                                   n_layers=3,
-                                                   n_iter_cond_thresh=2500,
-                                                   cond_thresh_ratio=0.001)
-        self.enc_view_1 = construct_invertible_mlp(n=5,
-                                                   n_layers=3,
-                                                   n_iter_cond_thresh=2500,
-                                                   cond_thresh_ratio=0.001)
-        self.enc_view_2 = construct_invertible_mlp(n=5,
-                                                   n_layers=3,
-                                                   n_iter_cond_thresh=2500,
-                                                   cond_thresh_ratio=0.001)
-        self.enc_view_3 = construct_invertible_mlp(n=5,
-                                                   n_layers=3,
-                                                   n_iter_cond_thresh=2500,
-                                                   cond_thresh_ratio=0.001)
+                # Standardize latents
+                self.x_0 = (self.x_0 - torch.mean(self.x_0, dim=0)) / torch.std(
+                    self.x_0, dim=0)
+                self.x_1 = (self.x_1 - torch.mean(self.x_1, dim=0)) / torch.std(
+                    self.x_1, dim=0)
+                self.x_2 = (self.x_2 - torch.mean(self.x_2, dim=0)) / torch.std(
+                    self.x_2, dim=0)
+                self.x_3 = (self.x_3 - torch.mean(self.x_3, dim=0)) / torch.std(
+                    self.x_3, dim=0)
 
-        self.x_0 = self.enc_view_0(
-            torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
-                            dtype=torch.float32))
-        self.x_1 = self.enc_view_1(
-            torch.as_tensor(self.Z[:, [0, 1, 2, 4, 5]],
-                            dtype=torch.float32))
-        self.x_2 = self.enc_view_2(
-            torch.as_tensor(self.Z[:, [0, 1, 2, 3, 5]],
-                            dtype=torch.float32))
-        self.x_3 = self.enc_view_3(
-            torch.as_tensor(self.Z[:, [0, 1, 3, 4, 5]],
-                            dtype=torch.float32))
+            case 'reprod':
+                # Ground truth setting from original paper
+                self.subsets = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3), (0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3), (0, 1, 2, 3)]
+                self.content_indices = [[0, 1, 2, 4], [0, 1, 2, 3], [0, 1, 3, 4], [0, 1, 2, 5], [0, 1, 4, 5], [0, 1, 3, 5], [0, 1, 2], [0, 1, 4], [0, 1, 3], [0, 1, 5], [0, 1]]
 
-        self.x_0 = (self.x_0 - torch.mean(self.x_0, dim=0)) / torch.std(
-            self.x_0, dim=0)
-        self.x_1 = (self.x_1 - torch.mean(self.x_1, dim=0)) / torch.std(
-            self.x_1, dim=0)
-        self.x_2 = (self.x_2 - torch.mean(self.x_2, dim=0)) / torch.std(
-            self.x_2, dim=0)
-        self.x_3 = (self.x_3 - torch.mean(self.x_3, dim=0)) / torch.std(
-            self.x_3, dim=0)
+                self.enc_view_0 = construct_invertible_mlp(n=5,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=2500,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_1 = construct_invertible_mlp(n=5,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=2500,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_2 = construct_invertible_mlp(n=5,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=2500,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_3 = construct_invertible_mlp(n=5,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=2500,
+                                                           cond_thresh_ratio=0.001)
+
+                self.x_0 = self.enc_view_0(
+                    torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
+                                    dtype=torch.float32))
+                self.x_1 = self.enc_view_1(
+                    torch.as_tensor(self.Z[:, [0, 1, 2, 4, 5]],
+                                    dtype=torch.float32))
+                self.x_2 = self.enc_view_2(
+                    torch.as_tensor(self.Z[:, [0, 1, 2, 3, 5]],
+                                    dtype=torch.float32))
+                self.x_3 = self.enc_view_3(
+                    torch.as_tensor(self.Z[:, [0, 1, 3, 4, 5]],
+                                    dtype=torch.float32))
+
+                self.x_0 = (self.x_0 - torch.mean(self.x_0, dim=0)) / torch.std(
+                    self.x_0, dim=0)
+                self.x_1 = (self.x_1 - torch.mean(self.x_1, dim=0)) / torch.std(
+                    self.x_1, dim=0)
+                self.x_2 = (self.x_2 - torch.mean(self.x_2, dim=0)) / torch.std(
+                    self.x_2, dim=0)
+                self.x_3 = (self.x_3 - torch.mean(self.x_3, dim=0)) / torch.std(
+                    self.x_3, dim=0)
 
     def __len__(self):
         return self.n
