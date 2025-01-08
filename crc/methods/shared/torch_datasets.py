@@ -547,11 +547,9 @@ class ChambersDatasetMultiviewSynthetic(Dataset):
 
     def __getitem__(self, item):
         if not self.eval:
-            # return self.x_0[item], self.x_1[item], self.x_2[item], self.x_3[item]
-            return self.x_0[item], self.x_1[item], self.x_2[item]
+            return self.x_0[item], self.x_1[item], self.x_2[item], self.x_3[item]
         else:
-            # return self.x_0[item], self.x_1[item], self.x_2[item], self.x_3[item], self.Z[item]
-            return self.x_0[item], self.x_1[item], self.x_2[item], self.Z[item]
+            return self.x_0[item], self.x_1[item], self.x_2[item], self.x_3[item], self.Z[item]
 
 
 class ChambersDatasetMultiviewSemisynthetic(ChambersDatasetMultiview):
