@@ -158,8 +158,8 @@ def compute_multiview_r2(z, z_hat, content_indices, subsets, seed=42):
         target_factor = z[:, i]
         for j, subset in enumerate(subsets):
             for view_idx in subset:
-                source_factors = z_hat[view_idx, :, content_indices[j]]
-                # source_factors = z_hat[view_idx, :, :]
+                # source_factors = z_hat[view_idx, :, content_indices[j]]
+                source_factors = z_hat[view_idx, :, :]
                 # Alternative when each encoder has a different size
                 # source_factors = z_hat[view_idx]
                 # Split into train test
