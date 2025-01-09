@@ -106,8 +106,7 @@ class CRLMethod(ABC):
                 if self.scheduler is not None:
                     self.scheduler.step(np.mean(val_loss_values))  # TODO this only works for the plateu scheduler!
 
-        # return best_model
-        return copy.deepcopy(self.model)
+        return best_model
 
     @abstractmethod
     def encode_step(self, data):
