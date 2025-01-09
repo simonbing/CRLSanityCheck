@@ -544,6 +544,69 @@ class ChambersDatasetMultiviewSynthetic(Dataset):
                 self.x_3 = (self.x_3 - torch.mean(self.x_3, dim=0)) / torch.std(
                     self.x_3, dim=0)
 
+            case 'chamber_synth_scm':
+                # Re-sample gt from SCM
+                variances = rs.uniform(0.0, 0.1, size=d)
+
+                W = np.array([
+                    [0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 1],
+                    [0, 1, 0, 0, 1],
+                    [1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0]
+                ])
+
+                lganm = LGANM(W=W, means=np.zeros(d),
+                              variances=variances, random_state=42)
+
+                self.Z = lganm.sample(n)
+
+
+                self.subsets = [(0, 1), (0, 2), (0, 3)]
+                self.content_indices = [[0, 1, 2], [3], [4]]
+
+                # Sample mixing functions
+                self.enc_view_0 = construct_invertible_mlp(n=5,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_1 = construct_invertible_mlp(n=3,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_2 = construct_invertible_mlp(n=1,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+                self.enc_view_3 = construct_invertible_mlp(n=1,
+                                                           n_layers=3,
+                                                           n_iter_cond_thresh=25000,
+                                                           cond_thresh_ratio=0.001)
+
+                # Apply mixing functions
+                self.x_0 = self.enc_view_0(
+                    torch.as_tensor(self.Z[:, [0, 1, 2, 3, 4]],
+                                    dtype=torch.float32))
+                self.x_1 = self.enc_view_1(
+                    torch.as_tensor(self.Z[:, [0, 1, 2]],
+                                    dtype=torch.float32))
+                self.x_2 = self.enc_view_2(
+                    torch.as_tensor(self.Z[:, [3]],
+                                    dtype=torch.float32))
+                self.x_3 = self.enc_view_3(
+                    torch.as_tensor(self.Z[:, [4]],
+                                    dtype=torch.float32))
+
+                # Standardize latents
+                self.x_0 = (self.x_0 - torch.mean(self.x_0, dim=0)) / torch.std(
+                    self.x_0, dim=0)
+                self.x_1 = (self.x_1 - torch.mean(self.x_1, dim=0)) / torch.std(
+                    self.x_1, dim=0)
+                self.x_2 = (self.x_2 - torch.mean(self.x_2, dim=0)) / torch.std(
+                    self.x_2, dim=0)
+                self.x_3 = (self.x_3 - torch.mean(self.x_3, dim=0)) / torch.std(
+                    self.x_3, dim=0)
+
             case 'reprod':
                 # Ground truth setting from original paper
                 self.subsets = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3), (0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3), (0, 1, 2, 3)]
