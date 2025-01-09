@@ -61,9 +61,11 @@ class CRLMethod(ABC):
         self.model = self.model.to(self.device)
 
         train_dataloader = DataLoader(train_dataset, shuffle=True,
-                                      batch_size=self.batch_size)
+                                      batch_size=self.batch_size,
+                                      drop_last=True)
         val_dataloader = DataLoader(val_dataset, shuffle=False,
-                                    batch_size=self.batch_size)
+                                    batch_size=self.batch_size,
+                                    drop_last=True)
 
         best_val_loss = np.inf
         best_model = copy.deepcopy(self.model)

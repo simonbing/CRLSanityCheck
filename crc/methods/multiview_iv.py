@@ -135,9 +135,6 @@ class Multiview(CRLMethod):
         loss = self.loss_f(z, estimated_content_indices,
                            self.dataset.subsets)
 
-        ### EXPERIMENTAL
-        loss = loss / len(data[0])  # scale by batch size
-
         return loss, {'loss': loss.item()}
 
     def encode_step(self, data):
