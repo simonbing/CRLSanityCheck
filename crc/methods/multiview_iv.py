@@ -70,6 +70,19 @@ class Multiview(CRLMethod):
                     include_iv_data=True,
                     transform_list=mlp_list
                 )
+            case 'multiview_semi_synthetic_decoder':
+                tf_list = [
+                    None,
+                    None,
+                    None,
+                    None
+                ]
+                dataset = ChambersDatasetMultiviewSemisynthetic(
+                    dataset='lt_camera_v1',
+                    task=self.task,
+                    include_iv_data=True,
+                    transform_list=tf_list
+                )
             case 'multiview_synthetic':
                 dataset = ChambersDatasetMultiviewSynthetic(d=5, n=100000)
             case 'multiview_synthetic_2':
@@ -121,6 +134,9 @@ class Multiview(CRLMethod):
 
         loss = self.loss_f(z, estimated_content_indices,
                            self.dataset.subsets)
+
+        ### EXPERIMENTAL
+        loss = loss / len(data[0])  # scale by batch size
 
         return loss, {'loss': loss.item()}
 
