@@ -190,7 +190,7 @@ def compute_multiview_r2(z, z_hat, content_indices, subsets, seed=42):
                 # )
 
                 # Lightweight option
-                nonlin_reg = MLPRegressor(max_iter=1000, random_state=seed)
+                nonlin_reg = MLPRegressor(max_iter=5000, random_state=seed)
                 nonlin_reg.fit(source_train, target_train)
 
                 results_nonlin[i, j, view_idx] = r2_score(target_test,
