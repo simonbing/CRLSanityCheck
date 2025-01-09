@@ -76,6 +76,8 @@ class Multiview(CRLMethod):
                 dataset = ChambersDatasetMultiviewSynthetic(d=3, n=100000, gt_model='model_2')
             case 'multiview_synthetic_reprod':
                 dataset = ChambersDatasetMultiviewSynthetic(d=6, n=100000, gt_model='reprod')
+            case 'multiview_synthetic_chambers_indep':
+                dataset = ChambersDatasetMultiviewSynthetic(d=5, n=100000, gt_model='chamber_synth_indep')
             case _:
                 dataset = ChambersDatasetMultiviewOLD(dataset=self.dataset_name,
                                                       task=self.task,
