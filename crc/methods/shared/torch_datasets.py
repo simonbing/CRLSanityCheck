@@ -1,3 +1,4 @@
+import inspect
 import os
 
 from causalchamber.datasets import Dataset as ChamberData
@@ -668,22 +669,38 @@ class ChambersDatasetMultiviewSemisynthetic(ChambersDatasetMultiview):
         self.transform_view_1, self.transform_view_2, \
             self.transform_view_3, self.transform_view_4 = transform_list
 
+        # Standardize the non-image views
+        # View 2:
+        z_view_2 = self.data[['red', 'green', 'blue']].values
+        self.view_2 = self.transform_view_2(
+            torch.as_tensor(z_view_2, dtype=torch.float32))
+        self.view_2 = (self.view_2 - torch.mean(self.view_2, dim=0)) / torch.std(self.view_2, dim=0)
+
+        # View 3:
+        z_view_3 = self.data['pol_1'].values
+        self.view_3 = self.transform_view_3(
+            torch.as_tensor(z_view_3, dtype=torch.float32).unsqueeze(dim=-1))
+        self.view_3 = (self.view_3 - torch.mean(self.view_3, dim=0)) / torch.std(self.view_3, dim=0)
+
+        # View 4:
+        z_view_4 = self.data['pol_2'].values
+        self.view_4 = self.transform_view_4(
+            torch.as_tensor(z_view_4, dtype=torch.float32).unsqueeze(dim=-1))
+        self.view_4 = (self.view_4 - torch.mean(self.view_4, dim=0)) / torch.std(self.view_4, dim=0)
+
     def __getitem__(self, item):
         # View 1: image
         z_view_1 = self.data[self.features].iloc[item]
-        view_1 = self.transform_view_1(torch.as_tensor(z_view_1, dtype=torch.float32))
+        if inspect.ismethod(self.transform_view_1):  # for decoder simulator
+            im = self.transform_view_1(z_view_1.to_frame().T).squeeze().transpose(2, 0, 1)
+            im = im / 255.0
+            view_1 = torch.as_tensor(im, dtype=torch.float32)
+        else:
+            view_1 = self.transform_view_1(torch.as_tensor(z_view_1, dtype=torch.float32))
 
-        # View 2: Current, Intensity_1, Intensity_2
-        z_view_2 = self.data[['red', 'green', 'blue']].iloc[item]
-        view_2 = self.transform_view_2(torch.as_tensor(z_view_2, dtype=torch.float32))
-
-        # View 3: Angle 1
-        z_view_3 = self.data['pol_1'].iloc[item]
-        view_3 = self.transform_view_3(torch.as_tensor(z_view_3, dtype=torch.float32))
-
-        # View 4: Angle 2
-        z_view_4 = self.data['pol_2'].iloc[item]
-        view_4 = self.transform_view_4(torch.as_tensor(z_view_4, dtype=torch.float32))
+        view_2 = self.view_2[item]
+        view_3 = self.view_3[item]
+        view_4 = self.view_4[item]
 
         if not self.eval:
             return view_1, view_2, view_3, view_4

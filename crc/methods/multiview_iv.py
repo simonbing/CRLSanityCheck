@@ -11,8 +11,10 @@ from crc.methods import CRLMethod
 from crc.methods.shared.torch_datasets import ChambersDatasetMultiviewOLD, \
     ChambersDatasetMultiview, ChambersDatasetMultiviewSemisynthetic, ChambersDatasetMultiviewSynthetic
 from crc.methods.shared import FCEncoder, ConvEncoder
+from crc.methods.shared.utils import construct_invertible_mlp
 from crc.methods.shared.losses import infonce_loss
 from crc.methods.shared.utils import gumbel_softmax_mask
+from crc.utils.chamber_sim.simulators.lt.image import DecoderSimple
 
 
 class Multiview(CRLMethod):
@@ -71,15 +73,26 @@ class Multiview(CRLMethod):
                     transform_list=mlp_list
                 )
             case 'multiview_semi_synthetic_decoder':
+                decoder_sim = DecoderSimple()
                 tf_list = [
-                    None,
-                    None,
-                    None,
-                    None
+                    decoder_sim.simulate_from_inputs,
+                    construct_invertible_mlp(n=3,
+                                             n_layers=3,
+                                             n_iter_cond_thresh=25000,
+                                             cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(n=1,
+                                             n_layers=3,
+                                             n_iter_cond_thresh=25000,
+                                             cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(n=1,
+                                             n_layers=3,
+                                             n_iter_cond_thresh=25000,
+                                             cond_thresh_ratio=0.001)
                 ]
                 dataset = ChambersDatasetMultiviewSemisynthetic(
                     dataset='lt_camera_v1',
                     task=self.task,
+                    data_root=self.data_root,
                     include_iv_data=True,
                     transform_list=tf_list
                 )

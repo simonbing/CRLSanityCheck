@@ -17,6 +17,7 @@ flags.DEFINE_enum('method', 'multiview',
 flags.DEFINE_enum('dataset', 'lt_camera_v1', ['lt_camera_v1', 'contrast_synthetic',
                                               'contrast_semi_synthetic_mlp',
                                               'multiview_semi_synthetic_mlp',
+                                              'multiview_semi_synthetic_decoder',
                                               'multiview_synthetic', 'multiview_synthetic_2',
                                               'multiview_synthetic_reprod',
                                               'multiview_synthetic_chambers_indep',
@@ -84,6 +85,13 @@ def main(argv):
                 FLAGS.encoder = ['fc', 'fc', 'fc', 'fc']
                 kwarg_dict = {
                     'in_dims': [5, 3, 1, 1],
+                    'selection': FLAGS.selection,
+                    'tau': FLAGS.tau
+                }
+            elif FLAGS.dataset == 'multiview_semi_synthetic_decoder':
+                FLAGS.encoder = ['conv', 'fc', 'fc', 'fc']
+                kwarg_dict = {
+                    'in_dims': [None, 3, 1, 1],
                     'selection': FLAGS.selection,
                     'tau': FLAGS.tau
                 }
