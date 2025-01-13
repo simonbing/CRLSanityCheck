@@ -220,10 +220,10 @@ def main(argv):
         z_hat = np.asarray(z_hat, dtype=np.float32)
 
     # MCC metric
-    z_pred_sign_matched = z_hat * np.sign(z_hat)[:, 0:1] * np.sign(z_gt)[:, 0:1]
+    # z_pred_sign_matched = z_hat * np.sign(z_hat)[:, 0:1] * np.sign(z_gt)[:, 0:1]
 
     mccs = compute_mccs(z_gt, z_hat)
-    mccs_sign_matched = compute_mccs(z_gt, z_pred_sign_matched)
+    # mccs_sign_matched = compute_mccs(z_gt, z_pred_sign_matched)
     mccs_abs = compute_mccs(np.abs(z_gt), np.abs(z_hat))
 
     results['mcc_in'] = mccs['mcc_s_in']
@@ -232,7 +232,7 @@ def main(argv):
     results['mcc_w_out'] = mccs['mcc_w_out']
 
     print('Alternative MCC scores:')
-    print(mccs_sign_matched)
+    # print(mccs_sign_matched)
     print(mccs_abs)
 
     # SHD metric
