@@ -7,6 +7,8 @@ from PIL import Image
 import numpy as np
 
 from crc.baselines.contrastive_crl.src.data_generation import get_data_from_kwargs, ChamberDataset
+from crc.methods.shared.torch_datasets import ChambersDatasetContrastiveSemiSynthetic
+from crc.baselines.contrastive_crl.src.models import EmbeddingNet
 
 
 def sanity_checks_kwargs(data_kwargs, model_kwargs, training_kwargs):
@@ -69,69 +71,95 @@ def save_images(images, dir, filename):
 
 def get_chamber_data(dataset, task, data_root, seed):
     # For sanity checking contrastive CRL code
-    if dataset == 'contrast_synth':
+    match dataset:
+        case 'contrast_synth':
+            data_kwargs = {
+                'mixing': 'mlp',
+                'd': 5,
+                'k': 2,
+                'n': 10000,
+                'seed': seed,
+                'dim_x': 20,
+                'hidden_dim': 512,
+                'hidden_layers': 3,
+                'var_range_obs': (1., 2.),
+                'var_range_int': (1., 2.),
+                'mean_range': (1., 2.),
+                'repeat_obs_samples': True
+            }
+            databag = get_data_from_kwargs(
+                data_kwargs)  # databags is the term used in original code
 
-        data_kwargs = {
-            'mixing': 'mlp',
-            'd': 5,
-            'k': 2,
-            'n': 10000,
-            'seed': seed,
-            'dim_x': 20,
-            'hidden_dim': 512,
-            'hidden_layers': 3,
-            'var_range_obs': (1., 2.),
-            'var_range_int': (1., 2.),
-            'mean_range': (1., 2.),
-            'repeat_obs_samples': True
-        }
-        databag = get_data_from_kwargs(data_kwargs)  # databags is the term used in original code
+            dataset_train = databag.get_datasets(mode='train')
+            dataset_val = databag.get_datasets(mode='val')
+            dataset_test = databag.get_datasets(mode='test')
+        case 'contrast_img':
+            data_kwargs = {
+                'mixing': 'image',
+                'd': 4,  # 2 balls
+                'k': 2,
+                'n': 25000,
+                'seed': seed,
+                # 'dim_x': 20,
+                # 'hidden_dim': 512,
+                # 'hidden_layers': 3,
+                'var_range_obs': (0.01, 0.02),
+                'var_range_int': (0.01, 0.02),
+                'mean_range': (0.1, 0.2),
+                'constrain_to_image': True,
+                'repeat_obs_samples': True
+            }
+            databag = get_data_from_kwargs(data_kwargs)
 
-        dataset_train = databag.get_datasets(mode='train')
-        dataset_val = databag.get_datasets(mode='val')
-        dataset_test = databag.get_datasets(mode='test')
-    elif dataset == 'contrast_img':
-        data_kwargs = {
-            'mixing': 'image',
-            'd': 4, # 2 balls
-            'k': 2,
-            'n': 25000,
-            'seed': seed,
-            # 'dim_x': 20,
-            # 'hidden_dim': 512,
-            # 'hidden_layers': 3,
-            'var_range_obs': (0.01, 0.02),
-            'var_range_int': (0.01, 0.02),
-            'mean_range': (0.1, 0.2),
-            'constrain_to_image': True,
-            'repeat_obs_samples': True
-        }
-        databag = get_data_from_kwargs(data_kwargs)
+            dataset_train = databag.get_datasets(mode='train')
+            dataset_val = databag.get_datasets(mode='val')
+            dataset_test = databag.get_datasets(mode='test')
+        case 'contrast_semi_synth_mlp':
+            chamber_dataset = ChambersDatasetContrastiveSemiSynthetic(
+                dataset='lt_camera_v1',
+                task=task,
+                data_root=data_root,
+                transform=EmbeddingNet(5, 20, 512, hidden_layers=3, residual=False)
+            )
 
-        dataset_train = databag.get_datasets(mode='train')
-        dataset_val = databag.get_datasets(mode='val')
-        dataset_test = databag.get_datasets(mode='test')
-    else:
-        chamber_dataset = ChamberDataset(dataset=dataset, task=task,
-                                        data_root=data_root, eval=True)
-        # Split dataset into train, val, test
-        d = chamber_dataset.W.shape[0]
-        n_per_env = int(len(chamber_dataset)/d)
+            # Split dataset into train, val, test
+            d = chamber_dataset.W.shape[0]
+            n_per_env = int(len(chamber_dataset) / d)
 
-        train_frac = 0.8
-        val_frac = 0.1
-        test_frac = 0.1
+            train_frac = 0.8
+            val_frac = 0.1
+            test_frac = 0.1
 
-        n_train = int(n_per_env * train_frac)
-        n_val = int(n_per_env * val_frac)
-        n_test = int(n_per_env * test_frac)
+            n_train = int(n_per_env * train_frac)
+            n_val = int(n_per_env * val_frac)
 
-        train_idxs, val_idxs, test_idxs = split_chamberdata(chamber_dataset,
-                                                            train_samples=n_train,
-                                                            val_samples=n_val)
-        dataset_train = Subset(chamber_dataset, train_idxs)
-        dataset_val = Subset(chamber_dataset, val_idxs)
-        dataset_test = Subset(chamber_dataset, test_idxs)
+            train_idxs, val_idxs, test_idxs = split_chamberdata(
+                chamber_dataset, train_samples=n_train, val_samples=n_val)
+
+            dataset_train = Subset(chamber_dataset, train_idxs)
+            dataset_val = Subset(chamber_dataset, val_idxs)
+            dataset_test = Subset(chamber_dataset, test_idxs)
+        case _:
+            chamber_dataset = ChamberDataset(dataset=dataset, task=task,
+                                             data_root=data_root, eval=True)
+            # Split dataset into train, val, test
+            d = chamber_dataset.W.shape[0]
+            n_per_env = int(len(chamber_dataset) / d)
+
+            train_frac = 0.8
+            val_frac = 0.1
+            test_frac = 0.1
+
+            n_train = int(n_per_env * train_frac)
+            n_val = int(n_per_env * val_frac)
+            n_test = int(n_per_env * test_frac)
+
+            train_idxs, val_idxs, test_idxs = split_chamberdata(chamber_dataset,
+                                                                train_samples=n_train,
+                                                                val_samples=n_val)
+            dataset_train = Subset(chamber_dataset, train_idxs)
+            dataset_val = Subset(chamber_dataset, val_idxs)
+            dataset_test = Subset(chamber_dataset, test_idxs)
 
     return dataset_train, dataset_val, dataset_test
 

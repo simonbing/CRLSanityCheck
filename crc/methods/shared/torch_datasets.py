@@ -38,6 +38,12 @@ class ChambersDatasetContrastive(Dataset):
         # Observational data
         obs_data = chamber_data.get_experiment(
             name=f'{self.exp}_reference').as_pandas_dataframe()
+        Z_obs = obs_data[self.features].to_numpy()
+        # Normalize
+        self.means = np.mean(Z_obs, axis=0, keepdims=True)
+        self.scale_factors = np.std(Z_obs, axis=0, keepdims=True)
+        Z_obs = (Z_obs - self.means) / self.scale_factors
+        self.Z_obs = np.tile(Z_obs, (Z_obs.shape[-1], 1))
 
         # Interventional data
         iv_data_list = [chamber_data.get_experiment(
@@ -52,6 +58,9 @@ class ChambersDatasetContrastive(Dataset):
         # Get one big df for all iv data
         self.iv_data = pd.concat(iv_data_list)
 
+        Z_iv = self.iv_data[self.features].to_numpy()
+        self.Z_iv = (Z_iv - self.means) / self.scale_factors
+
         # Generate intervention index list
         iv_names = []
         for idx, iv_data in enumerate(iv_data_list):
@@ -59,9 +68,10 @@ class ChambersDatasetContrastive(Dataset):
         self.iv_names = np.concatenate(iv_names)
 
         # Resample observational data to have same nr of samples as iv_data
-        self.obs_data = obs_data.loc[np.random.choice(len(obs_data),
-                                                      size=len(self.iv_data),
-                                                      replace=True), :]
+        # self.obs_data = obs_data.loc[np.random.choice(len(obs_data),
+        #                                               size=len(self.iv_data),
+        #                                               replace=True), :]
+        self.obs_data = pd.concat([obs_data] * len(self.features))
 
         # Get ground truth adjacency matrix
         match self.exp:
@@ -192,15 +202,15 @@ class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
         self.transform = transform
 
     def __getitem__(self, item):
-        Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
-        Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
+        # Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
+        # Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
         if not self.eval:
-            return self.transform(torch.as_tensor(Z_obs, dtype=torch.float32)), \
-                self.transform(torch.as_tensor(Z_iv, dtype=torch.float32)), \
+            return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
+                self.transform(torch.as_tensor(self.Z_iv[item], dtype=torch.float32)), \
                 torch.as_tensor(self.iv_names[item], dtype=torch.int)
         else:
-            return self.transform(torch.as_tensor(Z_obs, dtype=torch.float32)), \
-                torch.as_tensor(Z_obs, dtype=torch.float32)
+            return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
+                torch.as_tensor(self.Z_obs[item], dtype=torch.float32)
 
 
 class ChambersDatasetMultiviewOLD(Dataset):
