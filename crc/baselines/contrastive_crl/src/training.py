@@ -119,47 +119,50 @@ def train_model(model, device, dl_train, dl_val, training_kwargs, z_gt=None, x_v
         else:
             train_loss_history.append(loss_tracker.get_mean_loss()['CE-loss'])
         loss_tracker.reset()
-        # Validation step
-        for step, data in enumerate(dl_val):
-            x_obs, x_int, t_int = data[0], data[1], data[2]
-            x_obs, x_int, t_int = x_obs.to(device), x_int.to(device), t_int.to(device)
-            if contrastive:
-                logits_int = model(x_int, t_int)
-                logits_obs, embedding = model(x_obs, t_int, True)
-                method_specific_loss = eta * torch.sum(torch.mean(embedding, dim=0) ** 2)
-            else:
-                x_int_hat, mean_int, _, logits_int = model(x_int, t_int, False)
-                x_obs_hat, mean_obs, logvar_obs, logits_obs = model(x_obs, t_int, False)
 
-                rec_loss = mse(x_obs, x_obs_hat) / x_obs.size(0)
-                if not model.match_observation_dist_only:
-                    rec_loss += mse(x_int, x_int_hat) / x_int.size(0)
+        if (i % 10 == 0) or i == epochs-1:  # Only perform validation every 10 epochs
+            # Validation step
+            for step, data in enumerate(dl_val):
+                x_obs, x_int, t_int = data[0], data[1], data[2]
+                x_obs, x_int, t_int = x_obs.to(device), x_int.to(device), t_int.to(device)
+                if contrastive:
+                    logits_int = model(x_int, t_int)
+                    logits_obs, embedding = model(x_obs, t_int, True)
+                    method_specific_loss = eta * torch.sum(torch.mean(embedding, dim=0) ** 2)
+                else:
+                    x_int_hat, mean_int, _, logits_int = model(x_int, t_int, False)
+                    x_obs_hat, mean_obs, logvar_obs, logits_obs = model(x_obs, t_int, False)
 
-                kl_divergence = - 0.5 * torch.mean(1 + logvar_obs - mean_obs.pow(2) - logvar_obs.exp())
-                method_specific_loss = rec_loss + kl_divergence
+                    rec_loss = mse(x_obs, x_obs_hat) / x_obs.size(0)
+                    if not model.match_observation_dist_only:
+                        rec_loss += mse(x_int, x_int_hat) / x_int.size(0)
 
-            classifier_loss = ce(logits_obs, torch.zeros(x_obs.size(0), dtype=torch.long, device=device)) + \
-                                  ce(logits_int, torch.ones(x_int.size(0), dtype=torch.long, device=device))
-            accuracy = (torch.sum(torch.argmax(logits_obs, dim=1) == 0) + torch.sum(
-            torch.argmax(logits_int, dim=1) == 1)) / (2 * x_int.size(0))
-            loss_tracker.add_loss(
-                {'method_loss': method_specific_loss.item(), 'CE-loss': classifier_loss.item(),
-                 'A-reg loss': reg_loss.item(), 'accuracy': accuracy.item()}, x_obs.size(0))
-        ce_loss = loss_tracker.get_mean_loss()['CE-loss']
-        # vanilla models do not provide classification so we use their elbo for model selection
-        if getattr(model, 'vanilla', False):
-            ce_loss = loss_tracker.get_mean_loss()['method_loss']
-        if ce_loss < val_loss:
-            best_model = copy.deepcopy(model)
-            val_loss = ce_loss
-        if verbose:
-            loss_tracker.print_mean_loss()
-        val_loss_history.append(ce_loss)
+                    kl_divergence = - 0.5 * torch.mean(1 + logvar_obs - mean_obs.pow(2) - logvar_obs.exp())
+                    method_specific_loss = rec_loss + kl_divergence
 
-        # scheduler.step()
-        scheduler.step(ce_loss)
+                classifier_loss = ce(logits_obs, torch.zeros(x_obs.size(0), dtype=torch.long, device=device)) + \
+                                      ce(logits_int, torch.ones(x_int.size(0), dtype=torch.long, device=device))
+                accuracy = (torch.sum(torch.argmax(logits_obs, dim=1) == 0) + torch.sum(
+                torch.argmax(logits_int, dim=1) == 1)) / (2 * x_int.size(0))
+                loss_tracker.add_loss(
+                    {'method_loss': method_specific_loss.item(), 'CE-loss': classifier_loss.item(),
+                     'A-reg loss': reg_loss.item(), 'accuracy': accuracy.item()}, x_obs.size(0))
+            ce_loss = loss_tracker.get_mean_loss()['CE-loss']
+            # vanilla models do not provide classification so we use their elbo for model selection
+            if getattr(model, 'vanilla', False):
+                ce_loss = loss_tracker.get_mean_loss()['method_loss']
+            if ce_loss < val_loss:
+                best_model = copy.deepcopy(model)
+                val_loss = ce_loss
+            if verbose:
+                loss_tracker.print_mean_loss()
+            val_loss_history.append(ce_loss)
 
-        loss_tracker.reset()
+            # scheduler.step()
+            scheduler.step(ce_loss)
+
+            loss_tracker.reset()
+
         if z_gt is not None:
             z_gt_tensor = torch.tensor(z_gt, device=device, dtype=torch.float)
             z_pred = model.get_z(torch.tensor(x_val, device=device, dtype=torch.float))
