@@ -30,7 +30,9 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1',
-                                    'contrast_synth', 'contrast_img', 'contrast_semi_synth_mlp'], 'Dataset for training.')
+                                    'contrast_synth', 'contrast_img',
+                                    'contrast_semi_synth_mlp', 'contrast_synth_re'],
+                  'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
@@ -136,7 +138,7 @@ def main(argv):
 
         # Build model
         match FLAGS.dataset:
-            case a if a in ('contrast_synth', 'contrast_semi_synth_mlp'):
+            case a if a in ('contrast_synth', 'contrast_semi_synth_mlp', 'contrast_synth_re'):
                 model = get_contrastive_synthetic(input_dim=20,
                                                   latent_dim=FLAGS.lat_dim,
                                                   hidden_dim=512,

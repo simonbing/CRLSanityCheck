@@ -14,6 +14,7 @@ from torch.utils.data import Dataset
 from crc.utils import get_task_environments
 from crc.methods.shared.architectures import FCEncoder
 from crc.methods.shared.utils import construct_invertible_mlp
+from crc.baselines.contrastive_crl.src.models import EmbeddingNet
 
 
 def _map_iv_envs(idx, exp, env_list):
@@ -148,39 +149,88 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         self.eval = False
 
         # Sample adjacency
-        W = dag_avg_deg(p=d, k=k, w_min=0.25, w_max=1.0, random_state=42)
+        W, ordering = dag_avg_deg(p=d, k=k, w_min=0.25, w_max=1.0,
+                                  return_ordering=True, random_state=42)
         # Add signs
         rs = np.random.RandomState(42)
         mask = rs.binomial(n=1, p=0.5, size=W.size,).reshape(W.shape)
-        self.W = W - 2 * mask * W
+        # self.W = W - 2 * mask * W
+        # self.W = W
+
+        ###
+        self.W = np.array([
+        [0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.71943922, 0.0, 0.0, 0.0, 0.67726298],
+        [0.0, 0.89303215, 0.0, 0.0, 0.98534901],
+        [0.84868401, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0]])
+
+        # Observational means
+        obs_means = np.array(
+            [0.3773956, 0.34388784, 0.38585979, 0.3697368, 0.30941773])
+        # Standard deviations
+        stds = np.array(
+            [0.09926867, 0.09283419, 0.09358193, 0.07384341, 0.08351158])
+        int_means = np.array(
+            [0.48110359, 0.45315549, 0.49229844, 0.47796442, 0.41385188])
+        ###
 
         variances_obs = rs.uniform(1.0, 2.0, size=d)
+        # variances_obs = rs.uniform(0.01, 0.02, size=d)
 
         lganm = LGANM(W=self.W, means=np.zeros(d), variances=variances_obs, random_state=42)
+        # means_obs = rs.uniform(0.1, 0.2, size=d)
+        # lganm = LGANM(W=self.W, means=means_obs, variances=variances_obs, random_state=42)
+        # lganm = LGANM(W=self.W, means=np.zeros(d), variances=stds,
+        #               random_state=42)
 
         # Observational samples
         obs_samples = lganm.sample(n)
+        self.means = np.mean(obs_samples, axis=0, keepdims=True)
+        self.stds = np.std(obs_samples, axis=0, keepdims=True)
+
+        obs_samples = (obs_samples - self.means) / self.stds
+
+        # scales_up = np.array([[255/8, 255/8, 255/8, 90/4, 90/4]])
+        # shifts_up = np.array([[127.5, 127.5, 127.5, 0, 0]])
+        #
+        # obs_up = np.clip(obs_samples, a_min=-4, a_max=4) * scales_up + shifts_up
+
         self.Z_obs = np.tile(obs_samples, (d, 1))
 
         # Interventional samples
-        means_iv = np.random.uniform(1.0, 2.0, size=d)
-        mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
-        means_iv = means_iv - 2 * mask * means_iv
+        means_iv = rs.uniform(1.0, 2.0, size=d)
+        # means_iv = rs.uniform(0.1, 0.2, size=d)
+        # means_iv = int_means
+        # mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
+        # means_iv = means_iv - 2 * mask * means_iv
         variances_iv = rs.uniform(1.0, 2.0, size=d)
 
         iv_samples = []
         iv_targets = []
         for i in range(d):
-            samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
+            # samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
+            samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_obs[i])})
+            # samples = lganm.sample(n, do_interventions={i: (int_means[i], stds[i])})
             iv_samples.append(samples)
             iv_targets.append(i * np.ones(n, dtype=np.int_))
         self.Z_iv = np.concatenate(iv_samples, axis=0)
-        self.iv_targets = np.concatenate(iv_targets, axis=0)
 
-        self.transform = FCEncoder(in_dim=d, latent_dim=x_dim,
-                                   hidden_dims=[512, 512, 512],
-                                   relu_slope=0.2,
-                                   residual=False)
+        self.Z_iv = (self.Z_iv - self.means) / self.stds
+
+        ###
+        self.Z_obs = np.clip(self.Z_obs, a_min=-4, a_max=4)
+        self.Z_iv = np.clip(self.Z_iv, a_min=-4, a_max=4)
+        ###
+
+        self.iv_names = np.concatenate(iv_targets, axis=0)
+
+        # self.transform = FCEncoder(in_dim=d, latent_dim=x_dim,
+        #                            hidden_dims=[512, 512, 512],
+        #                            relu_slope=0.2,
+        #                            residual=False)
+
+        self.transform = EmbeddingNet(5, 20, 512, hidden_layers=3, residual=False)
 
     def __len__(self):
         return len(self.Z_obs)
@@ -189,7 +239,7 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         if not self.eval:
             return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
                 self.transform(torch.as_tensor(self.Z_iv[item], dtype=torch.float32)), \
-                torch.as_tensor(self.iv_targets[item], dtype=torch.int)
+                torch.as_tensor(self.iv_names[item], dtype=torch.int)
         else:
             return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
                 self.Z_obs[item]
