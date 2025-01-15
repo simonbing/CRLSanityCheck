@@ -191,8 +191,7 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
 
         obs_samples = (obs_samples - self.means) / self.stds
 
-        # scales_up = np.array([[255/8, 255/8, 255/8, 90/4, 90/4]])
-        # shifts_up = np.array([[127.5, 127.5, 127.5, 0, 0]])
+
         #
         # obs_up = np.clip(obs_samples, a_min=-4, a_max=4) * scales_up + shifts_up
 
@@ -202,15 +201,15 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         means_iv = rs.uniform(1.0, 2.0, size=d)
         # means_iv = rs.uniform(0.1, 0.2, size=d)
         # means_iv = int_means
-        # mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
-        # means_iv = means_iv - 2 * mask * means_iv
+        mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
+        means_iv = means_iv - 2 * mask * means_iv
         variances_iv = rs.uniform(1.0, 2.0, size=d)
 
         iv_samples = []
         iv_targets = []
         for i in range(d):
-            # samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
-            samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_obs[i])})
+            samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
+            # samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_obs[i])})
             # samples = lganm.sample(n, do_interventions={i: (int_means[i], stds[i])})
             iv_samples.append(samples)
             iv_targets.append(i * np.ones(n, dtype=np.int_))
@@ -221,6 +220,18 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         ###
         self.Z_obs = np.clip(self.Z_obs, a_min=-4, a_max=4)
         self.Z_iv = np.clip(self.Z_iv, a_min=-4, a_max=4)
+
+        scales_up = np.array([[255/8, 255/8, 255/8, 90/4, 90/4]])
+        shifts_up = np.array([[127.5, 127.5, 127.5, 0, 0]])
+
+        Z_obs_re = self.Z_obs * scales_up + shifts_up
+        Z_iv_re = self.Z_iv * scales_up + shifts_up
+
+        mean_back = np.mean(Z_obs_re, axis=0, keepdims=True)
+        std_back = np.std(Z_obs_re, axis=0, keepdims=True)
+
+        self.Z_obs = (Z_obs_re - mean_back) / std_back
+        self.Z_iv = (Z_iv_re - mean_back) / std_back
         ###
 
         self.iv_names = np.concatenate(iv_targets, axis=0)
