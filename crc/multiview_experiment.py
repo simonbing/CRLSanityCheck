@@ -11,13 +11,15 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 from torchvision.models import resnet18
 import wandb
 
-from crc.utils import get_device
-from crc.baselines.multiview_crl.datasets import Multimodal3DIdent
+from crc.utils import get_device, train_val_test_split
+from crc.shared.architectures import FCEncoder
+from crc.baselines.multiview_crl.invertible_network_utils import construct_invertible_mlp
+from crc.baselines.multiview_crl.datasets import Multimodal3DIdent, MultiviewSynthDataset
 from crc.baselines.multiview_crl.encoders import TextEncoder2D
 from crc.baselines.multiview_crl.infinite_iterator import InfiniteIterator
 from crc.baselines.multiview_crl.losses import infonce_loss
@@ -35,7 +37,7 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                     'Root directory where data is saved.')
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
-flags.DEFINE_enum('dataset', 'multimodal3di', ['multimodal3di'],
+flags.DEFINE_enum('dataset', 'multimodal3di', ['multimodal3di', 'multiview_synth'],
                   'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
@@ -63,6 +65,7 @@ flags.DEFINE_bool('eval_style', False, 'Evaluate style variables, too.')
 def get_datasets(dataset):
     match dataset:
         case 'multimodal3di':
+            # Normalization of the input images; (r, g, b) channels
             transform = transforms.Compose(
                 [
                     transforms.ToTensor(),
@@ -92,6 +95,45 @@ def get_datasets(dataset):
                 transform=transform,
                 vocab_filepath=train_dataset.vocab_filepath
             )
+        case 'multiview_synth':
+            full_dataset = MultiviewSynthDataset(
+                n=145000,
+                transforms=[
+                    construct_invertible_mlp(
+                        n=3,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(
+                        n=3,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(
+                        n=3,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(
+                        n=3,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001)
+                ]
+            )
+            # Split data
+            train_frac = 0.862
+            val_frac = 0.069
+            test_frac = 0.069
+
+            train_idxs, val_idxs, test_idxs = \
+                train_val_test_split(list(range(len(full_dataset))),
+                                     train_size=train_frac, val_size=val_frac,
+                                     random_state=42)
+
+            train_dataset = Subset(full_dataset, train_idxs)
+            val_dataset = Subset(full_dataset, val_idxs)
+            test_dataset = Subset(full_dataset, test_idxs)
 
     return train_dataset, val_dataset, test_dataset
 
@@ -117,6 +159,17 @@ def get_encoders(dataset):
             encoder_txt = torch.nn.DataParallel(encoder_txt, device_ids=[0])
 
             encoders = [encoder_img, encoder_txt]
+        case 'multiview_synth':
+            encoder_1 = FCEncoder(in_dim=3, latent_dim=4,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_2 = FCEncoder(in_dim=3, latent_dim=4,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_3 = FCEncoder(in_dim=3, latent_dim=4,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_4 = FCEncoder(in_dim=3, latent_dim=4,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+
+            encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
 
     return encoders
 
@@ -129,6 +182,14 @@ def get_train_args(dataset):
             subsets = [(0, 1), (0, 2), (1, 2), (0, 1, 2)]
             n_views = 3
             style_indices = [3, 4, 5, 6, 7, 8, 9]  # Anything that is not a content var
+        case 'multiview_synth':
+            modalities = ['view_1', 'view_2', 'view_3', 'view_4']
+            content_indices = [[0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [2, 3],
+                               [0], [1], [2], [3]]
+            subsets = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3),
+                       (0, 1, 2), (0, 1, 3,), (0, 2, 3), (1, 2, 3)]
+            n_views = 4
+            style_indices = []
 
     return modalities, content_indices, subsets, n_views, style_indices
 
@@ -303,7 +364,7 @@ def main(argv):
         "batch_size": FLAGS.batch_size,
         "shuffle": True,
         "drop_last": True,
-        "num_workers": 8,
+        "num_workers": 24,
         "pin_memory": True,
     }
 
@@ -433,6 +494,11 @@ def main(argv):
     ]
     df_results = pd.DataFrame(results, columns=columns)
     df_results.to_csv(os.path.join(eval_dir, "results.csv"))
+
+    # Log final table to wandb
+    results_table = wandb.Artifact('results_artifact', type='results')
+    results_table.add(wandb.Table(dataframe=df_results), 'results_table')
+
     print(df_results.to_string())
 
     print('Evaluation finished!')
