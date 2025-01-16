@@ -500,7 +500,6 @@ def main(argv):
     results_table.add(wandb.Table(dataframe=df_results), 'results_table')
 
     print(df_results.to_string())
-
     print('Evaluation finished!')
 
 
