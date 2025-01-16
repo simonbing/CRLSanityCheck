@@ -6,7 +6,7 @@ import random
 import sys
 
 from absl import flags, app
-import faiss
+# import faiss
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -236,7 +236,7 @@ def main(argv):
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
 
-    faiss.omp_set_num_threads(16)
+    # faiss.omp_set_num_threads(16)
 
     # Make directories to save results
     model_dir = os.path.join(FLAGS.root_dir, FLAGS.dataset, FLAGS.task, FLAGS.model)
