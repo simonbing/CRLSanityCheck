@@ -18,6 +18,7 @@ import wandb
 
 from crc.utils import get_device, train_val_test_split
 from crc.shared.architectures import FCEncoder
+from crc.baselines.contrastive_crl.src.models import EmbeddingNet
 from crc.baselines.multiview_crl.invertible_network_utils import construct_invertible_mlp
 from crc.baselines.multiview_crl.datasets import Multimodal3DIdent, MultiviewSynthDataset
 from crc.baselines.multiview_crl.encoders import TextEncoder2D
@@ -98,27 +99,34 @@ def get_datasets(dataset):
         case 'multiview_synth':
             full_dataset = MultiviewSynthDataset(
                 n=145000,
+                # transforms=[
+                #     construct_invertible_mlp(
+                #         n=3,
+                #         n_layers=3,
+                #         n_iter_cond_thresh=25000,
+                #         cond_thresh_ratio=0.001),
+                #     construct_invertible_mlp(
+                #         n=3,
+                #         n_layers=3,
+                #         n_iter_cond_thresh=25000,
+                #         cond_thresh_ratio=0.001),
+                #     construct_invertible_mlp(
+                #         n=3,
+                #         n_layers=3,
+                #         n_iter_cond_thresh=25000,
+                #         cond_thresh_ratio=0.001),
+                #     construct_invertible_mlp(
+                #         n=3,
+                #         n_layers=3,
+                #         n_iter_cond_thresh=25000,
+                #         cond_thresh_ratio=0.001)
+                # ]
+                # Alternative with encoders scaling up to larger dimension
                 transforms=[
-                    construct_invertible_mlp(
-                        n=3,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001),
-                    construct_invertible_mlp(
-                        n=3,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001),
-                    construct_invertible_mlp(
-                        n=3,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001),
-                    construct_invertible_mlp(
-                        n=3,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001)
+                    EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
+                    EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
+                    EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
+                    EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False)
                 ]
             )
             # Split data
@@ -160,13 +168,22 @@ def get_encoders(dataset):
 
             encoders = [encoder_img, encoder_txt]
         case 'multiview_synth':
-            encoder_1 = FCEncoder(in_dim=3, latent_dim=4,
+            # encoder_1 = FCEncoder(in_dim=3, latent_dim=4,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # encoder_2 = FCEncoder(in_dim=3, latent_dim=4,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # encoder_3 = FCEncoder(in_dim=3, latent_dim=4,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # encoder_4 = FCEncoder(in_dim=3, latent_dim=4,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # Alernative for other mixing (larger in dim)
+            encoder_1 = FCEncoder(in_dim=20, latent_dim=4,
                                   hidden_dims=[64, 256, 256, 256, 64])
-            encoder_2 = FCEncoder(in_dim=3, latent_dim=4,
+            encoder_2 = FCEncoder(in_dim=20, latent_dim=4,
                                   hidden_dims=[64, 256, 256, 256, 64])
-            encoder_3 = FCEncoder(in_dim=3, latent_dim=4,
+            encoder_3 = FCEncoder(in_dim=20, latent_dim=4,
                                   hidden_dims=[64, 256, 256, 256, 64])
-            encoder_4 = FCEncoder(in_dim=3, latent_dim=4,
+            encoder_4 = FCEncoder(in_dim=20, latent_dim=4,
                                   hidden_dims=[64, 256, 256, 256, 64])
 
             encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
@@ -280,7 +297,7 @@ def main(argv):
             "batch_size": FLAGS.batch_size,
             "shuffle": True,
             "drop_last": True,
-            "num_workers": 24,
+            "num_workers": 0,
             "pin_memory": True,
         }
 
@@ -364,7 +381,7 @@ def main(argv):
         "batch_size": FLAGS.batch_size,
         "shuffle": True,
         "drop_last": True,
-        "num_workers": 24,
+        "num_workers": 0,
         "pin_memory": True,
     }
 
@@ -380,7 +397,7 @@ def main(argv):
         subsets=subsets,
         n_views_arg=n_views,
         selection='ground_truth',
-        num_samples=10000,
+        num_samples=100,
     )
     test_dict = get_data(
         test_dataset,
@@ -394,7 +411,7 @@ def main(argv):
         subsets=subsets,
         n_views_arg=n_views,
         selection='ground_truth',
-        num_samples=10000,
+        num_samples=100,
     )
 
     # standardize the encodings
