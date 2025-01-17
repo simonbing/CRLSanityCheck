@@ -144,16 +144,17 @@ class ChambersDatasetContrastive(Dataset):
 
 
 class ChambersDatasetContrastiveSynthetic(Dataset):
-    def __init__(self, d, k, n=10000, x_dim=20):
+    def __init__(self, d, k, n=100000, x_dim=20):
         super().__init__()
         self.eval = False
 
         # Sample adjacency
-        W, ordering = dag_avg_deg(p=d, k=k, w_min=0.25, w_max=1.0,
-                                  return_ordering=True, random_state=42)
+        # W, ordering = dag_avg_deg(p=d, k=k, w_min=0.25, w_max=1.0,
+        #                           return_ordering=True, random_state=42)
         # Add signs
-        rs = np.random.RandomState(42)
-        mask = rs.binomial(n=1, p=0.5, size=W.size,).reshape(W.shape)
+        # rs = np.random.RandomState(471982081)
+        rs = np.random.default_rng(471917254012300182764)
+        # mask = rs.binomial(n=1, p=0.5, size=W.size,).reshape(W.shape)
         # self.W = W - 2 * mask * W
         # self.W = W
 
@@ -166,72 +167,69 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         [0.0, 0.0, 0.0, 0.0, 0.0]])
 
         # Observational means
-        obs_means = np.array(
-            [0.3773956, 0.34388784, 0.38585979, 0.3697368, 0.30941773])
-        # Standard deviations
-        stds = np.array(
-            [0.09926867, 0.09283419, 0.09358193, 0.07384341, 0.08351158])
-        int_means = np.array(
-            [0.48110359, 0.45315549, 0.49229844, 0.47796442, 0.41385188])
+        # obs_means = np.array(
+        #     [0.3773956, 0.34388784, 0.38585979, 0.3697368, 0.30941773])
+        # # Standard deviations
+        # stds = np.array(
+        #     [0.09926867, 0.09283419, 0.09358193, 0.07384341, 0.08351158])
+        # int_means = np.array(
+        #     [0.48110359, 0.45315549, 0.49229844, 0.47796442, 0.41385188])
         ###
 
-        variances_obs = rs.uniform(1.0, 2.0, size=d)
+        # variances_obs = rs.uniform(1.0, 2.0, size=d)
         # variances_obs = rs.uniform(0.01, 0.02, size=d)
 
-        lganm = LGANM(W=self.W, means=np.zeros(d), variances=variances_obs, random_state=42)
+        # lganm = LGANM(W=self.W, means=np.zeros(d), variances=variances_obs, random_state=47198208197)
         # means_obs = rs.uniform(0.1, 0.2, size=d)
         # lganm = LGANM(W=self.W, means=means_obs, variances=variances_obs, random_state=42)
         # lganm = LGANM(W=self.W, means=np.zeros(d), variances=stds,
         #               random_state=42)
 
         # Observational samples
-        obs_samples = lganm.sample(n)
-        self.means = np.mean(obs_samples, axis=0, keepdims=True)
-        self.stds = np.std(obs_samples, axis=0, keepdims=True)
-
-        obs_samples = (obs_samples - self.means) / self.stds
+        # obs_samples = lganm.sample(n)
+        # self.means = np.mean(obs_samples, axis=0, keepdims=True)
+        # self.stds = np.std(obs_samples, axis=0, keepdims=True)
+        # #
+        # obs_samples = (obs_samples - self.means) / self.stds
 
 
         #
         # obs_up = np.clip(obs_samples, a_min=-4, a_max=4) * scales_up + shifts_up
 
-        self.Z_obs = np.tile(obs_samples, (d, 1))
+        # self.Z_obs = np.tile(obs_samples, (d, 1))
 
         # Interventional samples
-        means_iv = rs.uniform(1.0, 2.0, size=d)
-        # means_iv = rs.uniform(0.1, 0.2, size=d)
-        # means_iv = int_means
-        mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
-        means_iv = means_iv - 2 * mask * means_iv
-        variances_iv = rs.uniform(1.0, 2.0, size=d)
+        # means_iv = rs.uniform(1.0, 2.0, size=d)
+        # mask = rs.binomial(n=1, p=0.5, size=means_iv.size).reshape(means_iv.shape)
+        # means_iv = means_iv - 2 * mask * means_iv
+        # variances_iv = rs.uniform(1.0, 2.0, size=d)
 
         iv_samples = []
         iv_targets = []
         for i in range(d):
-            samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
-            # samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_obs[i])})
-            # samples = lganm.sample(n, do_interventions={i: (int_means[i], stds[i])})
-            iv_samples.append(samples)
+            # samples = lganm.sample(n, do_interventions={i: (means_iv[i], variances_iv[i])})
+            # samples = (samples - self.means) / self.stds
+            # iv_samples.append(samples)
             iv_targets.append(i * np.ones(n, dtype=np.int_))
-        self.Z_iv = np.concatenate(iv_samples, axis=0)
+        # self.Z_iv = np.concatenate(iv_samples, axis=0)
 
-        self.Z_iv = (self.Z_iv - self.means) / self.stds
+        # self.Z_iv = (self.Z_iv - self.means) / self.stds
 
         ###
-        self.Z_obs = np.clip(self.Z_obs, a_min=-4, a_max=4)
-        self.Z_iv = np.clip(self.Z_iv, a_min=-4, a_max=4)
-
-        scales_up = np.array([[255/8, 255/8, 255/8, 90/4, 90/4]])
-        shifts_up = np.array([[127.5, 127.5, 127.5, 0, 0]])
-
-        Z_obs_re = self.Z_obs * scales_up + shifts_up
-        Z_iv_re = self.Z_iv * scales_up + shifts_up
-
-        mean_back = np.mean(Z_obs_re, axis=0, keepdims=True)
-        std_back = np.std(Z_obs_re, axis=0, keepdims=True)
-
-        self.Z_obs = (Z_obs_re - mean_back) / std_back
-        self.Z_iv = (Z_iv_re - mean_back) / std_back
+        # self.Z_obs = np.clip(self.Z_obs, a_min=-5, a_max=5)
+        # self.Z_iv = np.clip(self.Z_iv, a_min=-5, a_max=5)
+        #
+        # scales_up = np.array([[255/10, 255/10, 255/10, 90/5, 90/5]])
+        # shifts_up = np.array([[255/2, 255/2, 255/2, 0, 0]])
+        #
+        # Z_obs_re = self.Z_obs * scales_up + shifts_up
+        # Z_iv_re = self.Z_iv * scales_up + shifts_up
+        #
+        # mean_back = np.mean(Z_obs_re, axis=0, keepdims=True)
+        # std_back = np.std(Z_obs_re, axis=0, keepdims=True)
+        #
+        # self.Z_obs = (Z_obs_re - mean_back) / std_back
+        # self.Z_iv = (Z_iv_re - mean_back) / std_back
         ###
 
         self.iv_names = np.concatenate(iv_targets, axis=0)
@@ -240,6 +238,54 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         #                            hidden_dims=[512, 512, 512],
         #                            relu_slope=0.2,
         #                            residual=False)
+
+        ### Sanity check: load latents from chamber actuator files
+        base_path = '/Users/Simon/Downloads'
+
+        obs_path = os.path.join(base_path, 'bucholz_1_obs.txt')
+        obs_data = pd.read_csv(obs_path, sep=',')[
+            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        obs_data = obs_data.to_numpy()
+
+        red_path = os.path.join(base_path, 'bucholz_1_red.txt')
+        red_data = pd.read_csv(red_path, sep=',')[
+            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        red_data = red_data.to_numpy()
+
+        green_path = os.path.join(base_path, 'bucholz_1_green.txt')
+        green_data = pd.read_csv(green_path, sep=',')[
+            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        green_data = green_data.to_numpy()
+
+        blue_path = os.path.join(base_path, 'bucholz_1_blue.txt')
+        blue_data = pd.read_csv(blue_path, sep=',')[
+            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        blue_data = blue_data.to_numpy()
+
+        pol_1_path = os.path.join(base_path, 'bucholz_1_pol_1.txt')
+        pol_1_data = pd.read_csv(pol_1_path, sep=',')[
+            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        pol_1_data = pol_1_data.to_numpy()
+
+        pol_2_path = os.path.join(base_path, 'bucholz_1_pol_2.txt')
+        pol_2_data = pd.read_csv(pol_2_path, sep=',')[
+            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        pol_2_data = pol_2_data.to_numpy()
+
+        obs_data = np.tile(obs_data, (d, 1))
+        iv_data = np.concatenate((red_data, green_data, blue_data, pol_1_data, pol_2_data))
+
+        means = np.mean(obs_data, axis=0, keepdims=True)
+        stds = np.std(obs_data, axis=0, keepdims=True)
+
+        self.Z_obs = (obs_data - means) / stds
+        self.Z_iv = (iv_data - means) / stds
+
+
+        # a=0
+
+
+        ###
 
         self.transform = EmbeddingNet(5, 20, 512, hidden_layers=3, residual=False)
 
