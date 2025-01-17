@@ -1,9 +1,10 @@
 #! /usr/bin/bash
 
 # Loop over 5 random seeds
-for i in {1..3}
+#for i in {1..3}
+for SEED in 14666 18773 14748
 do
-SEED=$RANDOM
+#SEED=$RANDOM
   sbatch cluster_gpu.sh python ../multiview_experiment.py --model multiview_crl \
   --dataset multiview_synth --task synth_re --train_steps 300000 \
   --batch_size 128 --lr 0.0001 --lat_dim 4 --seed $SEED --run_name multiview_synth_wrap_0 \
