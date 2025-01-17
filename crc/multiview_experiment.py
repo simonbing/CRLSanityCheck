@@ -380,7 +380,7 @@ def main(argv):
         subsets=subsets,
         n_views_arg=n_views,
         selection='ground_truth',
-        num_samples=100,
+        num_samples=10000,
     )
     test_dict = get_data(
         test_dataset,
@@ -394,7 +394,7 @@ def main(argv):
         subsets=subsets,
         n_views_arg=n_views,
         selection='ground_truth',
-        num_samples=100,
+        num_samples=10000,
     )
 
     # standardize the encodings
