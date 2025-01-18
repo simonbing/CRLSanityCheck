@@ -134,10 +134,10 @@ def main(argv):
         # Make dataloaders
         dl_train = DataLoader(dataset_train, shuffle=True,
                               batch_size=FLAGS.batch_size,
-                              num_workers=24 if not gettrace() else 0)
+                              num_workers=0 if not gettrace() else 0)
         dl_val = DataLoader(dataset_val, shuffle=False,
                             batch_size=FLAGS.batch_size,
-                            num_workers=24 if not gettrace() else 0)
+                            num_workers=0 if not gettrace() else 0)
 
         # Build model
         match FLAGS.dataset:
