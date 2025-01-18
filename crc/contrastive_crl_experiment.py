@@ -31,7 +31,8 @@ flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepre
                     'Root directory where output is saved.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1',
                                     'contrast_synth', 'contrast_img',
-                                    'contrast_semi_synth_mlp', 'contrast_synth_re'],
+                                    'contrast_semi_synth_mlp', 'contrast_synth_re',
+                                    'contrast_semi_synth_decoder'],
                   'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
@@ -132,9 +133,11 @@ def main(argv):
 
         # Make dataloaders
         dl_train = DataLoader(dataset_train, shuffle=True,
-                              batch_size=FLAGS.batch_size)
+                              batch_size=FLAGS.batch_size,
+                              num_workers=24 if not gettrace() else 0)
         dl_val = DataLoader(dataset_val, shuffle=False,
-                            batch_size=FLAGS.batch_size)
+                            batch_size=FLAGS.batch_size,
+                            num_workers=24 if not gettrace() else 0)
 
         # Build model
         match FLAGS.dataset:
@@ -144,6 +147,10 @@ def main(argv):
                                                   hidden_dim=512,
                                                   hidden_layers=0,
                                                   residual=True)
+            case 'contrast_semi_synth_decoder':
+                model = get_contrastive_image(latent_dim=FLAGS.lat_dim,
+                                              conv=True,
+                                              channels=10)  # this is not used
             case _:
                 model = get_contrastive_image(latent_dim=FLAGS.lat_dim,
                                               conv=False,  # TODO: figure out this weird variable!

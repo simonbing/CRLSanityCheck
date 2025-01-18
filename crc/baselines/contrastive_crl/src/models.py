@@ -328,7 +328,6 @@ class ImageEncoderChambers(nn.Module):
 
         h_dim = 64
 
-
         conv_layers = [
             nn.Sequential(
                 nn.Conv2d(3 if i_layer == 0 else h_dim,

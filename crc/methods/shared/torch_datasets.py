@@ -121,34 +121,34 @@ class ChambersDatasetContrastive(Dataset):
         self.iv_names = np.concatenate(iv_targets, axis=0)
 
         obs_path = os.path.join(data_root, 'bucholz_1_obs.txt')
-        obs_data = pd.read_csv(obs_path, sep=',')[
+        obs_data_df = pd.read_csv(obs_path, sep=',')[
             ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        obs_data = obs_data.to_numpy()
+        obs_data = obs_data_df.to_numpy()
 
         red_path = os.path.join(data_root, 'bucholz_1_red.txt')
-        red_data = pd.read_csv(red_path, sep=',')[
+        red_data_df = pd.read_csv(red_path, sep=',')[
             ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        red_data = red_data.to_numpy()
+        red_data = red_data_df.to_numpy()
 
         green_path = os.path.join(data_root, 'bucholz_1_green.txt')
-        green_data = pd.read_csv(green_path, sep=',')[
+        green_data_df = pd.read_csv(green_path, sep=',')[
             ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        green_data = green_data.to_numpy()
+        green_data = green_data_df.to_numpy()
 
         blue_path = os.path.join(data_root, 'bucholz_1_blue.txt')
-        blue_data = pd.read_csv(blue_path, sep=',')[
+        blue_data_df = pd.read_csv(blue_path, sep=',')[
             ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        blue_data = blue_data.to_numpy()
+        blue_data = blue_data_df.to_numpy()
 
         pol_1_path = os.path.join(data_root, 'bucholz_1_pol_1.txt')
-        pol_1_data = pd.read_csv(pol_1_path, sep=',')[
+        pol_1_data_df = pd.read_csv(pol_1_path, sep=',')[
             ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        pol_1_data = pol_1_data.to_numpy()
+        pol_1_data = pol_1_data_df.to_numpy()
 
         pol_2_path = os.path.join(data_root, 'bucholz_1_pol_2.txt')
-        pol_2_data = pd.read_csv(pol_2_path, sep=',')[
+        pol_2_data_df = pd.read_csv(pol_2_path, sep=',')[
             ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        pol_2_data = pol_2_data.to_numpy()
+        pol_2_data = pol_2_data_df.to_numpy()
 
         obs_data = np.tile(obs_data, (d, 1))
         iv_data = np.concatenate(
@@ -159,6 +159,11 @@ class ChambersDatasetContrastive(Dataset):
 
         self.Z_obs = (obs_data - means) / stds
         self.Z_iv = (iv_data - means) / stds
+
+        # Data for decoder simulator
+        self.Z_obs_df = pd.concat([obs_data_df] * 5)
+        self.Z_iv_df = pd.concat([red_data_df, green_data_df, blue_data_df,
+                                  pol_1_data_df, pol_2_data_df])
         ###
 
     def __len__(self):
@@ -340,6 +345,7 @@ class ChambersDatasetContrastiveSynthetic(Dataset):
         self.Z_iv = (iv_data - means) / stds
 
 
+
         # a=0
 
 
@@ -367,15 +373,29 @@ class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
         self.transform = transform
 
     def __getitem__(self, item):
-        # Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
-        # Z_iv = self.iv_data[self.features].iloc[item].to_numpy()
-        if not self.eval:
-            return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
-                self.transform(torch.as_tensor(self.Z_iv[item], dtype=torch.float32)), \
-                torch.as_tensor(self.iv_names[item], dtype=torch.int)
+        if inspect.ismethod(self.transform):  # for decoder simulator
+            # We use the non-normalized data as input here
+            obs_df = self.Z_obs_df.iloc[item].to_frame().T
+            obs_sample = self.transform(obs_df)
+            obs_sample = obs_sample / 255.0
+            if not self.eval:
+                iv_df = self.Z_iv_df.iloc[item].to_frame().T
+                iv_sample = self.transform(iv_df)
+                iv_sample = iv_sample / 255.0
+                return torch.as_tensor(obs_sample.squeeze().transpose(2, 0, 1), dtype=torch.float32), \
+                    torch.as_tensor(iv_sample.squeeze().transpose(2, 0, 1), dtype=torch.float32), \
+                    torch.as_tensor(self.iv_names[item], dtype=torch.int)
+            else:
+                return torch.as_tensor(obs_sample.squeeze().transpose(2, 0, 1), dtype=torch.float32), \
+                    self.Z_obs[item]
         else:
-            return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
-                self.Z_obs[item]
+            if not self.eval:
+                return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
+                    self.transform(torch.as_tensor(self.Z_iv[item], dtype=torch.float32)), \
+                    torch.as_tensor(self.iv_names[item], dtype=torch.int)
+            else:
+                return self.transform(torch.as_tensor(self.Z_obs[item], dtype=torch.float32)), \
+                    self.Z_obs[item]
 
 
 class ChambersDatasetMultiviewOLD(Dataset):
