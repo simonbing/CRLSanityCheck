@@ -22,7 +22,7 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                     'Root directory where data is saved.')
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
-flags.DEFINE_enum('dataset', 'pong', ['pong'],
+flags.DEFINE_enum('dataset', 'pong', ['pong', 'chambers', 'chambers_semi_synth_decoder'],
                   'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
@@ -41,7 +41,7 @@ def main(argv):
     # wandb stuff
     wandb_config = dict(
         # model=FLAGS.model,
-        # dataset=FLAGS.dataset,
+        dataset=FLAGS.dataset,
         # task=FLAGS.task,
         # run_name=FLAGS.run_name,
         seed=FLAGS.seed,
@@ -62,6 +62,7 @@ def main(argv):
 
     # Training preparation
     datasets, data_loaders, data_name = load_datasets(seed=FLAGS.seed,
+                                                      dataset_name=FLAGS.dataset,
                                                       data_dir=FLAGS.data_root,
                                                       seq_len=2,
                                                       batch_size=FLAGS.batch_size,
@@ -121,8 +122,10 @@ def main(argv):
 
     train_model(model_class=model_class,
                 train_loader=data_loaders['train'],
-                val_loader=data_loaders['val_triplet'],  # TODO: check if we can get rid of the triplet datasets. This shuld only be needed for the triplet eval right? Could be an issue of needed for eval model selection
-                test_loader=data_loaders['test_triplet'],
+                # val_loader=data_loaders['val_triplet'],
+                val_loader=data_loaders['val'],
+                # test_loader=data_loaders['test_triplet'],
+                test_loader=data_loaders['test'],
                 root_dir=train_dir,
                 max_epochs=FLAGS.epochs,
                 logger_name=f'{FLAGS.model}_{FLAGS.lat_dim}l_{model_args["num_causal_vars"]}b_{FLAGS.c_hid}hid_{data_name}',
