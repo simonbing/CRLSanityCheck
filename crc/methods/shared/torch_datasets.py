@@ -370,8 +370,11 @@ class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
     def __init__(self, dataset, task, data_root, transform):
         super().__init__(dataset, task, data_root)
 
-        for p in transform.parameters():
-            p.requires_grad = False
+        try:
+            for p in transform.parameters():
+                p.requires_grad = False
+        except AttributeError:
+            pass
 
         self.transform = transform
 
