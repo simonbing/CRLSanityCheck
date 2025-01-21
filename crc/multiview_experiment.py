@@ -384,7 +384,7 @@ def main(argv):
             "batch_size": FLAGS.batch_size,
             "shuffle": True,
             "drop_last": True,
-            "num_workers": 24 if not gettrace() else 0,
+            "num_workers": 48 if not gettrace() else 0,
             "pin_memory": True,
         }
 
@@ -468,7 +468,7 @@ def main(argv):
         "batch_size": FLAGS.batch_size,
         "shuffle": True,
         "drop_last": True,
-        "num_workers": 24 if not gettrace() else 0,
+        "num_workers": 48 if not gettrace() else 0,
         "pin_memory": True,
     }
 
