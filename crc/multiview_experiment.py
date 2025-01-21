@@ -27,6 +27,7 @@ from crc.baselines.multiview_crl.infinite_iterator import InfiniteIterator
 from crc.baselines.multiview_crl.losses import infonce_loss
 from crc.baselines.multiview_crl.main_multimodal import train_step, get_data, eval_step
 import crc.baselines.multiview_crl.dci as dci
+from crc.utils.chamber_sim.simulators.lt.image import DecoderSimple
 
 FLAGS = flags.FLAGS
 
@@ -167,7 +168,31 @@ def get_datasets(dataset, data_root, exp_name):
             val_dataset = Subset(full_dataset, val_idxs)
             test_dataset = Subset(full_dataset, test_idxs)
         case 'chambers_semi_synth_decoder':
-            full_dataset = None
+            decoder_simu = DecoderSimple()
+            full_dataset = MultiviewChambersSemiSynthDataset(
+                dataset='lt_camera_v1',
+                data_root=data_root,
+                exp_name=exp_name,
+                transforms=[
+                    decoder_simu.simulate_from_inputs,
+                    EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
+                    EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False),
+                    EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False)
+                ]
+            )
+            # Split data
+            train_frac = 0.8
+            val_frac = 0.1
+            test_frac = 0.1
+
+            train_idxs, val_idxs, test_idxs = \
+                train_val_test_split(list(range(len(full_dataset))),
+                                     train_size=train_frac, val_size=val_frac,
+                                     random_state=42)
+
+            train_dataset = Subset(full_dataset, train_idxs)
+            val_dataset = Subset(full_dataset, val_idxs)
+            test_dataset = Subset(full_dataset, test_idxs)
 
     return train_dataset, val_dataset, test_dataset
 
@@ -233,9 +258,12 @@ def get_encoders(dataset):
                 torch.nn.LeakyReLU(),
                 torch.nn.Linear(100, 5),
             )
-            encoder_2 = None
-            encoder_3 = None
-            encoder_4 = None
+            encoder_2 = FCEncoder(in_dim=20, latent_dim=5,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_3 = FCEncoder(in_dim=20, latent_dim=5,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_4 = FCEncoder(in_dim=20, latent_dim=5,
+                                  hidden_dims=[64, 256, 256, 256, 64])
 
             encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
 
