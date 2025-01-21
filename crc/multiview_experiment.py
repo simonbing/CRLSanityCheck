@@ -20,7 +20,8 @@ from crc.utils import get_device, train_val_test_split
 from crc.shared.architectures import FCEncoder
 from crc.baselines.contrastive_crl.src.models import EmbeddingNet
 from crc.baselines.multiview_crl.invertible_network_utils import construct_invertible_mlp
-from crc.baselines.multiview_crl.datasets import Multimodal3DIdent, MultiviewSynthDataset
+from crc.baselines.multiview_crl.datasets import Multimodal3DIdent, MultiviewSynthDataset, \
+    MultiviewChambersDataset, MultiviewChambersSemiSynthDataset
 from crc.baselines.multiview_crl.encoders import TextEncoder2D
 from crc.baselines.multiview_crl.infinite_iterator import InfiniteIterator
 from crc.baselines.multiview_crl.losses import infonce_loss
@@ -38,8 +39,12 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
                     'Root directory where data is saved.')
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
-flags.DEFINE_enum('dataset', 'multimodal3di', ['multimodal3di', 'multiview_synth'],
+flags.DEFINE_enum('dataset', 'multimodal3di', ['multimodal3di',
+                                               'multiview_synth',
+                                               'chambers',
+                                               'chambers_semi_synth_decoder'],
                   'Dataset for training.')
+flags.DEFINE_string('exp_name', None, 'Name for the experiment in the dataset.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
@@ -63,7 +68,7 @@ flags.DEFINE_bool('eval_dci', False, 'Evaluate DCI metric.')
 flags.DEFINE_bool('eval_style', False, 'Evaluate style variables, too.')
 
 
-def get_datasets(dataset):
+def get_datasets(dataset, data_root, exp_name):
     match dataset:
         case 'multimodal3di':
             # Normalization of the input images; (r, g, b) channels
@@ -142,6 +147,27 @@ def get_datasets(dataset):
             train_dataset = Subset(full_dataset, train_idxs)
             val_dataset = Subset(full_dataset, val_idxs)
             test_dataset = Subset(full_dataset, test_idxs)
+        case 'chambers':
+            full_dataset = MultiviewChambersDataset(
+                dataset='lt_camera_v1',
+                data_root=data_root,
+                exp_name=exp_name
+            )
+            # Split data
+            train_frac = 0.8
+            val_frac = 0.1
+            test_frac = 0.1
+
+            train_idxs, val_idxs, test_idxs = \
+                train_val_test_split(list(range(len(full_dataset))),
+                                     train_size=train_frac, val_size=val_frac,
+                                     random_state=42)
+
+            train_dataset = Subset(full_dataset, train_idxs)
+            val_dataset = Subset(full_dataset, val_idxs)
+            test_dataset = Subset(full_dataset, test_idxs)
+        case 'chambers_semi_synth_decoder':
+            full_dataset = None
 
     return train_dataset, val_dataset, test_dataset
 
@@ -187,6 +213,31 @@ def get_encoders(dataset):
                                   hidden_dims=[64, 256, 256, 256, 64])
 
             encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
+        case 'chambers':
+            encoder_1 = torch.nn.Sequential(
+                resnet18(num_classes=100),
+                torch.nn.LeakyReLU(),
+                torch.nn.Linear(100, 5),
+            )
+            encoder_2 = FCEncoder(in_dim=3, latent_dim=5,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_3 = FCEncoder(in_dim=1, latent_dim=5,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+            encoder_4 = FCEncoder(in_dim=1, latent_dim=5,
+                                  hidden_dims=[64, 256, 256, 256, 64])
+
+            encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
+        case 'chambers_semi_synth_decoder':
+            encoder_1 = torch.nn.Sequential(
+                resnet18(num_classes=100),
+                torch.nn.LeakyReLU(),
+                torch.nn.Linear(100, 5),
+            )
+            encoder_2 = None
+            encoder_3 = None
+            encoder_4 = None
+
+            encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
 
     return encoders
 
@@ -205,6 +256,12 @@ def get_train_args(dataset):
                                [0], [1], [2], [3]]
             subsets = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3),
                        (0, 1, 2), (0, 1, 3,), (0, 2, 3), (1, 2, 3)]
+            n_views = 4
+            style_indices = []
+        case a if a in ['chambers', 'chambers_semi_synth_decoder']:
+            modalities = ['camera', 'current_intensities', 'angle_1', 'angle_2']
+            content_indices = [[0, 1, 2], [3], [4]]
+            subsets = [(0, 1), (0, 2), (0, 3)]
             n_views = 4
             style_indices = []
 
@@ -277,7 +334,9 @@ def main(argv):
         val_data_path = os.path.join(model_dir, 'val_dataset.pkl')
         test_data_path = os.path.join(model_dir, 'test_dataset.pkl')
         if not os.path.exists(train_data_path) or FLAGS.overwrite_data:
-            train_dataset, val_dataset, test_dataset = get_datasets(FLAGS.dataset)
+            train_dataset, val_dataset, test_dataset = get_datasets(FLAGS.dataset,
+                                                                    FLAGS.data_root,
+                                                                    FLAGS.exp_name)
 
             if not os.path.exists(train_data_path) or FLAGS.overwrite_data:
                 with open(train_data_path, 'wb') as f:
@@ -297,7 +356,7 @@ def main(argv):
             "batch_size": FLAGS.batch_size,
             "shuffle": True,
             "drop_last": True,
-            "num_workers": 24,
+            "num_workers": 24 if not gettrace() else 0,
             "pin_memory": True,
         }
 
@@ -381,7 +440,7 @@ def main(argv):
         "batch_size": FLAGS.batch_size,
         "shuffle": True,
         "drop_last": True,
-        "num_workers": 24,
+        "num_workers": 24 if not gettrace() else 0,
         "pin_memory": True,
     }
 
