@@ -40,10 +40,10 @@ flags.DEFINE_integer('c_hid', 64, 'Hidden dimension of model.')
 def main(argv):
     # wandb stuff
     wandb_config = dict(
-        # model=FLAGS.model,
+        model=FLAGS.model,
         dataset=FLAGS.dataset,
         # task=FLAGS.task,
-        # run_name=FLAGS.run_name,
+        run_name=FLAGS.run_name,
         seed=FLAGS.seed,
         batch_size=FLAGS.batch_size,
         # train_steps=FLAGS.train_steps,
@@ -61,6 +61,8 @@ def main(argv):
 
     # Training preparation
     torch.set_float32_matmul_precision('high')
+    torch.multiprocessing.set_start_method('spawn')
+
     datasets, data_loaders, data_name = load_datasets(seed=FLAGS.seed,
                                                       dataset_name=FLAGS.dataset,
                                                       data_dir=FLAGS.data_root,
