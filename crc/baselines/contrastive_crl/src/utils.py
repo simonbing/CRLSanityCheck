@@ -141,7 +141,7 @@ def get_chamber_data(dataset, task, data_root, seed):
             dataset_test = Subset(chamber_dataset, test_idxs)
         case 'contrast_semi_synth_mlp':
             chamber_dataset = ChambersDatasetContrastiveSemiSynthetic(
-                dataset=dataset,
+                dataset='lt_crl_benchmark_v1',
                 task=task,
                 data_root=data_root,
                 transform=EmbeddingNet(5, 20, 512, hidden_layers=3, residual=False)
@@ -167,7 +167,7 @@ def get_chamber_data(dataset, task, data_root, seed):
         case 'contrast_semi_synth_decoder':
             decoder_simu = DecoderSimple()
             chamber_dataset = ChambersDatasetContrastiveSemiSynthetic(
-                dataset='lt_camera_v1',
+                dataset='lt_crl_benchmark_v1',
                 task=task,
                 data_root=data_root,
                 transform=decoder_simu.simulate_from_inputs
