@@ -34,7 +34,7 @@ flags.DEFINE_integer('batch_size', 512, 'Batch size.')
 
 # Model params
 flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
-flags.DEFINE_integer('c_hid', 32, 'Hidden dimension of model.')
+flags.DEFINE_integer('c_hid', 64, 'Hidden dimension of model.')
 
 
 def main(argv):
@@ -81,10 +81,10 @@ def main(argv):
 
     model_args = {
         'data_folder': FLAGS.data_root,
-        'img_width': datasets['train'].get_img_width(),
-        'num_causal_vars': datasets['train'].num_vars(),
+        'img_width': datasets['train'].dataset.get_img_width(),
+        'num_causal_vars': datasets['train'].dataset.num_vars(),
         'max_iters': FLAGS.epochs * len(data_loaders['train']),
-        'c_in': datasets['train'].get_inp_channels(),  # Nr of input channels
+        'c_in': datasets['train'].dataset.get_inp_channels(),  # Nr of input channels
         'batch_size': FLAGS.batch_size,
         'num_workers': 24 if not gettrace() else 0,
         'exclude_vars': None,
@@ -133,10 +133,10 @@ def main(argv):
                 callback_kwargs={'dataset': datasets['train'],
                                  'correlation_dataset': datasets['val'],  # Independent latents here
                                  'correlation_test_dataset': datasets['test']},
-                var_names=datasets['train'].target_names(),
-                causal_var_info=datasets['train'].get_causal_var_info(),
+                var_names=datasets['train'].dataset.target_names(),
+                causal_var_info=datasets['train'].dataset.get_causal_var_info(),
                 save_last_model=True,
-                cluster_logging=False,  # TODO: check where to add wandb in this wrapper
+                cluster_logging=False,
                 **model_args)
 
     print('Training finished!')

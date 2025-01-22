@@ -11,6 +11,6 @@
 
 # Activate environment
 source ~/.bashrc
-source activate crc
+source activate crc_pl
 
 "$@"
