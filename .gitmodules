@@ -7,3 +7,6 @@
 [submodule "crc/baselines/multiview_crl"]
 	path = crc/baselines/multiview_crl
 	url = git@github.com:simonbing/multiview-crl.git
+[submodule "crc/baselines/citris"]
+	path = crc/baselines/citris
+	url = git@github.com:simonbing/CITRIS.git

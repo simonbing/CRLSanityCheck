@@ -66,7 +66,7 @@ def main(argv):
                                                       data_dir=FLAGS.data_root,
                                                       seq_len=2,
                                                       batch_size=FLAGS.batch_size,
-                                                      num_workers=24 if not gettrace() else 0)  # TODO: change on cluster (4)
+                                                      num_workers=24 if not gettrace() else 0)
 
     # Make directories to save results
     model_dir = os.path.join(FLAGS.root_dir, FLAGS.dataset, FLAGS.task, FLAGS.model)
