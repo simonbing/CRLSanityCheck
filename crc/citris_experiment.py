@@ -60,6 +60,7 @@ def main(argv):
     )
 
     # Training preparation
+    torch.set_float32_matmul_precision('high')
     datasets, data_loaders, data_name = load_datasets(seed=FLAGS.seed,
                                                       dataset_name=FLAGS.dataset,
                                                       data_dir=FLAGS.data_root,
@@ -128,8 +129,8 @@ def main(argv):
                 root_dir=train_dir,
                 max_epochs=FLAGS.epochs,
                 logger_name=f'{FLAGS.model}_{FLAGS.lat_dim}l_{model_args["num_causal_vars"]}b_{FLAGS.c_hid}hid_{data_name}',
-                check_val_every_n_epoch=25 if not gettrace() else 2, #25
-                progress_bar_refresh_rate=0 if not gettrace() else 1, #0
+                check_val_every_n_epoch=2 if not gettrace() else 2, #25
+                progress_bar_refresh_rate=1 if not gettrace() else 1, #0
                 callback_kwargs={'dataset': datasets['train'],
                                  'correlation_dataset': datasets['val'],  # Independent latents here
                                  'correlation_test_dataset': datasets['test']},
