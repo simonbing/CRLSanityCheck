@@ -148,9 +148,9 @@ def get_datasets(dataset, data_root, exp_name):
             train_dataset = Subset(full_dataset, train_idxs)
             val_dataset = Subset(full_dataset, val_idxs)
             test_dataset = Subset(full_dataset, test_idxs)
-        case 'chambers':
+        case 'lt_crl_benchmark_v1':
             full_dataset = MultiviewChambersDataset(
-                dataset='lt_camera_v1',
+                dataset='lt_crl_benchmark_v1',
                 data_root=data_root,
                 exp_name=exp_name
             )
@@ -238,7 +238,7 @@ def get_encoders(dataset):
                                   hidden_dims=[64, 256, 256, 256, 64])
 
             encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
-        case 'chambers':
+        case 'lt_crl_benchmark_v1':
             encoder_1 = torch.nn.Sequential(
                 resnet18(num_classes=100),
                 torch.nn.LeakyReLU(),
@@ -286,7 +286,7 @@ def get_train_args(dataset):
                        (0, 1, 2), (0, 1, 3,), (0, 2, 3), (1, 2, 3)]
             n_views = 4
             style_indices = []
-        case a if a in ['chambers', 'chambers_semi_synth_decoder']:
+        case a if a in ['lt_crl_benchmark_v1', 'chambers_semi_synth_decoder']:
             modalities = ['camera', 'current_intensities', 'angle_1', 'angle_2']
             content_indices = [[0, 1, 2], [3], [4]]
             subsets = [(0, 1), (0, 2), (0, 3)]
@@ -333,6 +333,9 @@ def main(argv):
     )
 
     # Training preparation
+    torch.set_float32_matmul_precision('high')
+    torch.multiprocessing.set_start_method('spawn')
+
     # Set all seeds
     torch.manual_seed(FLAGS.seed)
     np.random.seed(FLAGS.seed)
