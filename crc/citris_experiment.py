@@ -55,8 +55,7 @@ def main(argv):
     wandb.init(
         project='chambers',
         entity='CausalRepresentationChambers',  # this is the team name in wandb
-        mode='online' if not gettrace() else 'offline',
-        # don't log if debugging
+        mode='online' if not gettrace() else 'offline',  # don't log if debugging
         config=wandb_config
     )
 
