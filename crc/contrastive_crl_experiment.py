@@ -30,6 +30,7 @@ flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
 flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
                     'Root directory where output is saved.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1',
+                                    'lt_crl_benchmark_v1',
                                     'contrast_synth', 'contrast_img',
                                     'contrast_semi_synth_mlp', 'contrast_synth_re',
                                     'contrast_semi_synth_decoder'],
@@ -75,6 +76,7 @@ def main(argv):
     )
 
     # Training preparation
+    torch.set_float32_matmul_precision('high')
 
     # Set all seeds
     torch.manual_seed(FLAGS.seed)
@@ -147,7 +149,7 @@ def main(argv):
                                                   hidden_dim=512,
                                                   hidden_layers=0,
                                                   residual=True)
-            case 'contrast_semi_synth_decoder':
+            case b if b in ('lt_crl_benchmark_v1', 'contrast_semi_synth_decoder'):
                 model = get_contrastive_image(latent_dim=FLAGS.lat_dim,
                                               conv=True,
                                               channels=10)  # this is not used
