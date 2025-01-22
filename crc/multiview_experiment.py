@@ -42,7 +42,7 @@ flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepre
                     'Root directory where output is saved.')
 flags.DEFINE_enum('dataset', 'multimodal3di', ['multimodal3di',
                                                'multiview_synth',
-                                               'chambers',
+                                               'lt_crl_benchmark_v1',
                                                'chambers_semi_synth_decoder'],
                   'Dataset for training.')
 flags.DEFINE_string('exp_name', None, 'Name for the experiment in the dataset.')
