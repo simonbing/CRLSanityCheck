@@ -42,6 +42,10 @@ def get_task_environments(task):
         exp_name = 'ar_1_uniform'
         env_list = ['ref']
         features = ['red', 'green', 'blue', 'pol_1', 'pol_2']
+    elif task == 'contrast_crl_real':
+        exp_name = 'buchholz_1'
+        env_list = ['red', 'green', 'blue', 'pol_1', 'pol_2']
+        features = ['red', 'green', 'blue', 'pol_1', 'pol_2']
 
     return exp_name, env_list, features
 
