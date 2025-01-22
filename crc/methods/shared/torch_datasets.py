@@ -28,117 +28,117 @@ class ChambersDatasetContrastive(Dataset):
         super().__init__()
         self.eval = False
 
-        # self.W = np.array([
-        #     [0.0, 0.0, 0.0, 0.0, 0.0],
-        #     [0.71943922, 0.0, 0.0, 0.0, 0.67726298],
-        #     [0.0, 0.89303215, 0.0, 0.0, 0.98534901],
-        #     [0.84868401, 0.0, 0.0, 0.0, 0.0],
-        #     [0.0, 0.0, 0.0, 0.0, 0.0]]
-        # )
-        #
-        # self.data_root = data_root
-        # self.chamber_data_name = dataset
-        # self.exp, self.env_list, self.features = get_task_environments(task)
-        #
-        # chamber_data = ChamberData(name=self.chamber_data_name,
-        #                            root=self.data_root,
-        #                            download=True)
-        #
-        # # Observational data
-        # obs_data = chamber_data.get_experiment(
-        #     name=f'{self.exp}_obs').as_pandas_dataframe()
-        # Z_obs = obs_data[self.features].to_numpy()
-        # # Normalize
-        # self.means = np.mean(Z_obs, axis=0, keepdims=True)
-        # self.scale_factors = np.std(Z_obs, axis=0, keepdims=True)
-        # Z_obs = (Z_obs - self.means) / self.scale_factors
-        # self.Z_obs = np.tile(Z_obs, (Z_obs.shape[-1], 1))
-        #
-        # self.obs_data = pd.concat([obs_data] * 5)
-        #
-        # # Interventional data
-        # iv_data_list = [chamber_data.get_experiment(
-        #     name=f'{self.exp}_{env}').as_pandas_dataframe() for env in
-        #                 self.env_list]
-        #
-        # # Enforce that all iv_data have the same length
-        # n_list = [len(df) for df in iv_data_list]
-        # n_min = min(n_list)
-        # iv_data_list = [df[:n_min] for df in iv_data_list]
-        #
-        # # Get one big df for all iv data
-        # self.iv_data = pd.concat(iv_data_list)
-        #
-        # Z_iv = self.iv_data[self.features].to_numpy()
-        # self.Z_iv = (Z_iv - self.means) / self.scale_factors
-        #
-        # # Generate intervention index list
-        # iv_names = []
-        # for idx, iv_data in enumerate(iv_data_list):
-        #     iv_names.append(np.repeat(idx, len(iv_data)))
-        # self.iv_names = np.concatenate(iv_names)
-
-        ### Loading data directly from arrays of ground truth values (for semi-synth)
-        n = 10000
-        d = 5
-
         self.W = np.array([
             [0.0, 0.0, 0.0, 0.0, 0.0],
             [0.71943922, 0.0, 0.0, 0.0, 0.67726298],
             [0.0, 0.89303215, 0.0, 0.0, 0.98534901],
             [0.84868401, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0]])
+            [0.0, 0.0, 0.0, 0.0, 0.0]]
+        )
 
-        iv_targets = []
-        for i in range(d):
-            iv_targets.append(i * np.ones(n, dtype=np.int_))
+        self.data_root = data_root
+        self.chamber_data_name = dataset
+        self.exp, self.env_list, self.features = get_task_environments(task)
 
-        self.iv_names = np.concatenate(iv_targets, axis=0)
+        chamber_data = ChamberData(name=self.chamber_data_name,
+                                   root=self.data_root,
+                                   download=True)
 
-        obs_path = os.path.join(data_root, 'bucholz_1_obs.txt')
-        obs_data_df = pd.read_csv(obs_path, sep=',')[
-            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        obs_data = obs_data_df.to_numpy()
+        # Observational data
+        obs_data = chamber_data.get_experiment(
+            name=f'{self.exp}_obs').as_pandas_dataframe()
+        Z_obs = obs_data[self.features].to_numpy()
+        # Normalize
+        self.means = np.mean(Z_obs, axis=0, keepdims=True)
+        self.scale_factors = np.std(Z_obs, axis=0, keepdims=True)
+        Z_obs = (Z_obs - self.means) / self.scale_factors
+        self.Z_obs = np.tile(Z_obs, (Z_obs.shape[-1], 1))
 
-        red_path = os.path.join(data_root, 'bucholz_1_red.txt')
-        red_data_df = pd.read_csv(red_path, sep=',')[
-            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        red_data = red_data_df.to_numpy()
+        self.obs_data = pd.concat([obs_data] * 5)
 
-        green_path = os.path.join(data_root, 'bucholz_1_green.txt')
-        green_data_df = pd.read_csv(green_path, sep=',')[
-            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        green_data = green_data_df.to_numpy()
+        # Interventional data
+        iv_data_list = [chamber_data.get_experiment(
+            name=f'{self.exp}_{env}').as_pandas_dataframe() for env in
+                        self.env_list]
 
-        blue_path = os.path.join(data_root, 'bucholz_1_blue.txt')
-        blue_data_df = pd.read_csv(blue_path, sep=',')[
-            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        blue_data = blue_data_df.to_numpy()
+        # Enforce that all iv_data have the same length
+        n_list = [len(df) for df in iv_data_list]
+        n_min = min(n_list)
+        iv_data_list = [df[:n_min] for df in iv_data_list]
 
-        pol_1_path = os.path.join(data_root, 'bucholz_1_pol_1.txt')
-        pol_1_data_df = pd.read_csv(pol_1_path, sep=',')[
-            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        pol_1_data = pol_1_data_df.to_numpy()
+        # Get one big df for all iv data
+        self.iv_data = pd.concat(iv_data_list)
 
-        pol_2_path = os.path.join(data_root, 'bucholz_1_pol_2.txt')
-        pol_2_data_df = pd.read_csv(pol_2_path, sep=',')[
-            ['red', 'green', 'blue', 'pol_1', 'pol_2']]
-        pol_2_data = pol_2_data_df.to_numpy()
+        Z_iv = self.iv_data[self.features].to_numpy()
+        self.Z_iv = (Z_iv - self.means) / self.scale_factors
 
-        obs_data = np.tile(obs_data, (d, 1))
-        iv_data = np.concatenate(
-            (red_data, green_data, blue_data, pol_1_data, pol_2_data))
+        # Generate intervention index list
+        iv_names = []
+        for idx, iv_data in enumerate(iv_data_list):
+            iv_names.append(np.repeat(idx, len(iv_data)))
+        self.iv_names = np.concatenate(iv_names)
 
-        means = np.mean(obs_data, axis=0, keepdims=True)
-        stds = np.std(obs_data, axis=0, keepdims=True)
-
-        self.Z_obs = (obs_data - means) / stds
-        self.Z_iv = (iv_data - means) / stds
-
-        # Data for decoder simulator
-        self.Z_obs_df = pd.concat([obs_data_df] * 5)
-        self.Z_iv_df = pd.concat([red_data_df, green_data_df, blue_data_df,
-                                  pol_1_data_df, pol_2_data_df])
+        ### Loading data directly from arrays of ground truth values (for semi-synth)
+        # n = 10000
+        # d = 5
+        #
+        # self.W = np.array([
+        #     [0.0, 0.0, 0.0, 0.0, 0.0],
+        #     [0.71943922, 0.0, 0.0, 0.0, 0.67726298],
+        #     [0.0, 0.89303215, 0.0, 0.0, 0.98534901],
+        #     [0.84868401, 0.0, 0.0, 0.0, 0.0],
+        #     [0.0, 0.0, 0.0, 0.0, 0.0]])
+        #
+        # iv_targets = []
+        # for i in range(d):
+        #     iv_targets.append(i * np.ones(n, dtype=np.int_))
+        #
+        # self.iv_names = np.concatenate(iv_targets, axis=0)
+        #
+        # obs_path = os.path.join(data_root, 'bucholz_1_obs.txt')
+        # obs_data_df = pd.read_csv(obs_path, sep=',')[
+        #     ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        # obs_data = obs_data_df.to_numpy()
+        #
+        # red_path = os.path.join(data_root, 'bucholz_1_red.txt')
+        # red_data_df = pd.read_csv(red_path, sep=',')[
+        #     ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        # red_data = red_data_df.to_numpy()
+        #
+        # green_path = os.path.join(data_root, 'bucholz_1_green.txt')
+        # green_data_df = pd.read_csv(green_path, sep=',')[
+        #     ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        # green_data = green_data_df.to_numpy()
+        #
+        # blue_path = os.path.join(data_root, 'bucholz_1_blue.txt')
+        # blue_data_df = pd.read_csv(blue_path, sep=',')[
+        #     ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        # blue_data = blue_data_df.to_numpy()
+        #
+        # pol_1_path = os.path.join(data_root, 'bucholz_1_pol_1.txt')
+        # pol_1_data_df = pd.read_csv(pol_1_path, sep=',')[
+        #     ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        # pol_1_data = pol_1_data_df.to_numpy()
+        #
+        # pol_2_path = os.path.join(data_root, 'bucholz_1_pol_2.txt')
+        # pol_2_data_df = pd.read_csv(pol_2_path, sep=',')[
+        #     ['red', 'green', 'blue', 'pol_1', 'pol_2']]
+        # pol_2_data = pol_2_data_df.to_numpy()
+        #
+        # obs_data = np.tile(obs_data, (d, 1))
+        # iv_data = np.concatenate(
+        #     (red_data, green_data, blue_data, pol_1_data, pol_2_data))
+        #
+        # means = np.mean(obs_data, axis=0, keepdims=True)
+        # stds = np.std(obs_data, axis=0, keepdims=True)
+        #
+        # self.Z_obs = (obs_data - means) / stds
+        # self.Z_iv = (iv_data - means) / stds
+        #
+        # # Data for decoder simulator
+        # self.Z_obs_df = pd.concat([obs_data_df] * 5)
+        # self.Z_iv_df = pd.concat([red_data_df, green_data_df, blue_data_df,
+        #                           pol_1_data_df, pol_2_data_df])
         # ###
 
     def __len__(self):
@@ -352,6 +352,9 @@ class ChambersDatasetContrastiveSemiSynthetic(ChambersDatasetContrastive):
             pass
 
         self.transform = transform
+
+        self.Z_obs_df = self.obs_data
+        self.Z_iv_df = self.iv_data
 
     def __getitem__(self, item):
         if inspect.ismethod(self.transform):  # for decoder simulator
