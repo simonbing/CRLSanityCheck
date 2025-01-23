@@ -334,7 +334,7 @@ def main(argv):
 
     # Training preparation
     torch.set_float32_matmul_precision('high')
-    torch.multiprocessing.set_start_method('spawn')
+    # torch.multiprocessing.set_start_method('spawn')
 
     # Set all seeds
     torch.manual_seed(FLAGS.seed)
