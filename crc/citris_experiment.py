@@ -68,7 +68,7 @@ def main(argv):
                                                       data_dir=FLAGS.data_root,
                                                       seq_len=2,
                                                       batch_size=FLAGS.batch_size,
-                                                      num_workers=24 if not gettrace() else 0)
+                                                      num_workers=10 if not gettrace() else 0)
 
     # Make directories to save results
     model_dir = os.path.join(FLAGS.root_dir, FLAGS.dataset, FLAGS.task, FLAGS.model)
@@ -89,7 +89,7 @@ def main(argv):
         'max_iters': FLAGS.epochs * len(data_loaders['train']),
         'c_in': datasets['train'].dataset.get_inp_channels(),  # Nr of input channels
         'batch_size': FLAGS.batch_size,
-        'num_workers': 24 if not gettrace() else 0,
+        'num_workers': 10 if not gettrace() else 0,
         'exclude_vars': None,
         'exclude_objects': None,
         'coarse_vars': False,
