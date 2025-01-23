@@ -61,7 +61,7 @@ def main(argv):
 
     # Training preparation
     torch.set_float32_matmul_precision('high')
-    torch.multiprocessing.set_start_method('spawn')
+    # torch.multiprocessing.set_start_method('spawn')
 
     datasets, data_loaders, data_name = load_datasets(seed=FLAGS.seed,
                                                       dataset_name=FLAGS.dataset,
