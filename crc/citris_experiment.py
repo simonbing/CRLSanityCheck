@@ -129,6 +129,7 @@ def main(argv):
                 # test_loader=data_loaders['test_triplet'],
                 test_loader=data_loaders['test'],
                 root_dir=train_dir,
+                seed=FLAGS.seed,
                 max_epochs=FLAGS.epochs,
                 logger_name=f'{FLAGS.model}_{FLAGS.lat_dim}l_{model_args["num_causal_vars"]}b_{FLAGS.c_hid}hid_{data_name}',
                 check_val_every_n_epoch=5 if not gettrace() else 2, #25
