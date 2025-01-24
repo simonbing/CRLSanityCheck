@@ -96,7 +96,7 @@ def main(argv):
         'data_img_width': -1,
         'seq_len': 2,
         'lr': FLAGS.lr,
-        'warmup': 100,
+        'warmup': int(FLAGS.epochs/10),
         'imperfect_interventions': False,
         'c_hid': FLAGS.c_hid,
         'decoder_num_blocks': 1,
