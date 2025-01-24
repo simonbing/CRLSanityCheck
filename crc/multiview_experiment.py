@@ -175,9 +175,25 @@ def get_datasets(dataset, data_root, exp_name):
                 exp_name=exp_name,
                 transforms=[
                     decoder_simu.simulate_from_inputs,
-                    EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
-                    EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False),
-                    EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False)
+                    # Alternative mixing that keeps original dimension
+                    construct_invertible_mlp(
+                        n=3,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(
+                        n=1,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001),
+                    construct_invertible_mlp(
+                        n=1,
+                        n_layers=3,
+                        n_iter_cond_thresh=25000,
+                        cond_thresh_ratio=0.001)
+                    # EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
+                    # EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False),
+                    # EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False)
                 ]
             )
             # Split data
@@ -258,11 +274,18 @@ def get_encoders(dataset):
                 torch.nn.LeakyReLU(),
                 torch.nn.Linear(100, 5),
             )
-            encoder_2 = FCEncoder(in_dim=20, latent_dim=5,
+            # encoder_2 = FCEncoder(in_dim=20, latent_dim=5,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # encoder_3 = FCEncoder(in_dim=20, latent_dim=5,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # encoder_4 = FCEncoder(in_dim=20, latent_dim=5,
+            #                       hidden_dims=[64, 256, 256, 256, 64])
+            # Alternative mixing that keeps original dimension
+            encoder_2 = FCEncoder(in_dim=3, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
-            encoder_3 = FCEncoder(in_dim=20, latent_dim=5,
+            encoder_3 = FCEncoder(in_dim=1, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
-            encoder_4 = FCEncoder(in_dim=20, latent_dim=5,
+            encoder_4 = FCEncoder(in_dim=1, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
 
             encoders = [encoder_1, encoder_2, encoder_3, encoder_4]
