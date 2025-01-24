@@ -112,6 +112,7 @@ def main(argv):
         'gamma': 1.0,
         'lambda_reg': 0.0,
         'autoregressive_prior': False,
+        # 'use_flow_prior': True,
         'beta_classifier': 2.0,
         'beta_mi_estimator': 2.0,
         'lambda_sparse': 0.02,
