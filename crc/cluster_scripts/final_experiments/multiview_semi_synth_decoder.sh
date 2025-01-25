@@ -5,8 +5,8 @@ for i in {1..3}
 do
   SEED=$RANDOM
   sbatch ../cluster_gpu.sh python ../../multiview_experiment.py --model multiview_crl \
-  --dataset chambers_semi_synth_decoder --task chambers_semi_synth_bij --exp_name scm_2 --train_steps 22000 \
-  --batch_size 512 --lr 0.0001 --lat_dim 5 --seed $SEED --run_name multiview_semi_synth_dec_bij_mix_0 \
-  --data_root /work/bd1083/b382081/projects/CausalRepresentationChambers/data/contrast_crl_latents \
+  --dataset chambers_semi_synth_decoder --task chambers_semi_synth_sens --exp_name buchholz_1 --train_steps 22000 \
+  --batch_size 512 --lr 0.0001 --lat_dim 5 --seed $SEED --run_name multiview_semi_synth_dec_sensors_0 \
+  --data_root /work/bd1083/b382081/projects/CausalRepresentationChambers/data/chamber_downloads \
   --root_dir /work/bd1083/b382081/projects/CausalRepresentationChambers/results
 done
