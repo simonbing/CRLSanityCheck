@@ -133,7 +133,7 @@ def main(argv):
                 seed=FLAGS.seed,
                 max_epochs=FLAGS.epochs,
                 logger_name=f'{FLAGS.model}_{FLAGS.lat_dim}l_{model_args["num_causal_vars"]}b_{FLAGS.c_hid}hid_{data_name}',
-                check_val_every_n_epoch=5 if not gettrace() else 2, #25
+                check_val_every_n_epoch=1 if not gettrace() else 2, #5
                 progress_bar_refresh_rate=1 if not gettrace() else 1, #0
                 callback_kwargs={'dataset': datasets['train'],
                                  'correlation_dataset': datasets['val'],  # Independent latents here
