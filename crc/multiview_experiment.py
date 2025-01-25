@@ -28,6 +28,7 @@ from crc.baselines.multiview_crl.losses import infonce_loss
 from crc.baselines.multiview_crl.main_multimodal import train_step, get_data, eval_step
 import crc.baselines.multiview_crl.dci as dci
 from crc.utils.chamber_sim.simulators.lt.image import DecoderSimple
+from crc.utils.chamber_sim.simulators.lt.sensors import Deterministic
 
 FLAGS = flags.FLAGS
 
@@ -169,28 +170,52 @@ def get_datasets(dataset, data_root, exp_name):
             test_dataset = Subset(full_dataset, test_idxs)
         case 'chambers_semi_synth_decoder':
             decoder_simu = DecoderSimple()
+            sensor_params = {'S': np.array([[4.34165202, 2.8594438, 1.91565691],
+                                            [0.89410569, 1.58679242,
+                                             2.68477163]]),
+                             'd1': np.array(0.1),
+                             'd2': np.array(0.17),
+                             'd3': np.array(0.25),
+                             'Ts': np.array(
+                                 [0.42685688, 0.41231782, 0.46652526]),
+                             'Tp': np.array(
+                                 [0.2909342, 0.29624314, 0.30526271]),
+                             'Tc': np.array(
+                                 [0.00431032, 0.01447611, 0.02041075]),
+                             'C': np.array(
+                                 [0.12834946, 0.12870338, 0.13078523]),
+                             'c0': np.array(58.13307318503893),
+                             'A': np.array(1.42261211),
+                             'a1': np.array(506.8049747171294),
+                             'a2': np.array(510.98343062774353)
+                             }
+            sensors_simu = Deterministic(**sensor_params)
             full_dataset = MultiviewChambersSemiSynthDataset(
-                dataset='lt_camera_v1',
+                dataset='lt_crl_benchmark_v1',
                 data_root=data_root,
                 exp_name=exp_name,
                 transforms=[
                     decoder_simu.simulate_from_inputs,
+                    # Sensor mechanistic model,
+                    sensors_simu.simulate_from_inputs,
+                    sensors_simu.simulate_from_inputs,
+                    sensors_simu.simulate_from_inputs
                     # Alternative mixing that keeps original dimension
-                    construct_invertible_mlp(
-                        n=3,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001),
-                    construct_invertible_mlp(
-                        n=1,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001),
-                    construct_invertible_mlp(
-                        n=1,
-                        n_layers=3,
-                        n_iter_cond_thresh=25000,
-                        cond_thresh_ratio=0.001)
+                    # construct_invertible_mlp(
+                    #     n=3,
+                    #     n_layers=3,
+                    #     n_iter_cond_thresh=25000,
+                    #     cond_thresh_ratio=0.001),
+                    # construct_invertible_mlp(
+                    #     n=1,
+                    #     n_layers=3,
+                    #     n_iter_cond_thresh=25000,
+                    #     cond_thresh_ratio=0.001),
+                    # construct_invertible_mlp(
+                    #     n=1,
+                    #     n_layers=3,
+                    #     n_iter_cond_thresh=25000,
+                    #     cond_thresh_ratio=0.001)
                     # EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
                     # EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False),
                     # EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False)
