@@ -163,6 +163,9 @@ class ChambersDatasetContrastive(Dataset):
         # Normalize inputs
         obs_sample = obs_sample / 255.0
         iv_sample = iv_sample / 255.0
+        ### Double downscaling (same as synth)
+        obs_sample = obs_sample / 255.0
+        iv_sample = iv_sample / 255.0
 
         # Ground truth variables
         Z_obs = self.obs_data[self.features].iloc[item].to_numpy()
