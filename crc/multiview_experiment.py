@@ -311,7 +311,7 @@ def get_encoders(dataset):
             # encoder_4 = FCEncoder(in_dim=20, latent_dim=5,
             #                       hidden_dims=[64, 256, 256, 256, 64])
             # Alternative mixing that keeps original dimension
-            encoder_2 = FCEncoder(in_dim=5, latent_dim=5,
+            encoder_2 = FCEncoder(in_dim=3, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
             encoder_3 = FCEncoder(in_dim=1, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
