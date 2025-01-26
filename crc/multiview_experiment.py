@@ -285,7 +285,7 @@ def get_encoders(dataset):
                 torch.nn.LeakyReLU(),
                 torch.nn.Linear(100, 5),
             )
-            encoder_2 = FCEncoder(in_dim=3, latent_dim=5,
+            encoder_2 = FCEncoder(in_dim=5, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
             encoder_3 = FCEncoder(in_dim=1, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
