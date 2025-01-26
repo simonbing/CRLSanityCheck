@@ -1,7 +1,7 @@
 #! /usr/bin/bash
 
 # Loop over 5 random seeds
-for i in {1..2}
+for i in {1..5}
 do
   SEED=$RANDOM
   sbatch ../cluster_gpu.sh python ../../multiview_experiment.py --model multiview_crl \
