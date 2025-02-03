@@ -16,10 +16,9 @@ from crc.shared.architectures import FCEncoder
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
-                                 'CausalRepresentationChambers/data/chamber_downloads',
+flags.DEFINE_string('data_root', './data/chamber_downloads',
                     'Root directory where data is saved.')
-flags.DEFINE_integer('epochs', 1, 'Training epochs.')
+flags.DEFINE_integer('epochs', 100, 'Training epochs.')
 
 
 class SupervisedChambersDataset(Dataset):
@@ -68,34 +67,29 @@ class SupervisedChambersModel(torch.nn.Module):
         return y_hat
 
 def main(argv):
+    ############### wandb section ###############
+    # Can be ignored if not using wandb for experiment tracking
     wandb_config = dict(
         model='supervised'
     )
 
     gettrace = getattr(sys, 'gettrace', None)
 
+    if gettrace() or None in [FLAGS.wandb_project, FLAGS.wandb_username]:
+        print('Not using wandb for logging! This could be due to missing project and username flags!')
+        wandb_mode = 'offline'
+    else:
+        wandb_mode = 'online'
+
     wandb.init(
-        project='chambers',
-        entity='CausalRepresentationChambers',  # this is the team name in wandb
-        mode='online' if not gettrace() else 'offline',
-        # don't log if debugging
+        project=FLAGS.wandb_project,
+        entity=FLAGS.wandb_username,
+        mode=wandb_mode,
         config=wandb_config
     )
+    ##############################################
 
     # Get datasets
-    # train_dataset = SupervisedChambersDataset(dataset='lt_crl_benchmark_v1',
-    #                                           dataroot=FLAGS.data_root,
-    #                                           exp='uniform')
-    # train_dataset = Subset(SupervisedChambersDataset(
-    #     dataset='lt_crl_benchmark_v1',
-    #     dataroot=FLAGS.data_root,
-    #     exp='buchholz_1_obs'),
-    #     np.arange(1000, 6000))
-    # test_dataset = Subset(SupervisedChambersDataset(
-    #     dataset='lt_crl_benchmark_v1',
-    #     dataroot=FLAGS.data_root,
-    #     exp='buchholz_1_obs'),
-    #     np.arange(1000))
     train_dataset = Subset(SupervisedChambersDataset(
         dataset='lt_crl_benchmark_v1',
         dataroot=FLAGS.data_root,
@@ -160,8 +154,6 @@ def main(argv):
 
     # Get score, print results
     print(r2_score(y_test, y_hat_test))
-
-    a=0
 
 
 if __name__ == '__main__':
