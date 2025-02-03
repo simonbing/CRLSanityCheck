@@ -1,10 +1,7 @@
-import copy
 import os
-import pickle
 import sys
 
 from absl import flags, app
-import numpy as np
 import torch
 import wandb
 
@@ -17,11 +14,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_enum('model', 'citrisvae', ['citrisvae'],
                   'Model to train.')
-flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
-                                 'CausalRepresentationChambers/data/chamber_downloads',
-                    'Root directory where data is saved.')
-flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
-                    'Root directory where output is saved.')
+flags.DEFINE_string('data_root', './data/chamber_downloads', 'Root directory where data is saved.')
+flags.DEFINE_string('root_dir', './results', 'Root directory where output is saved.')
 flags.DEFINE_enum('dataset', 'pong', ['pong', 'chambers', 'chambers_semi_synth_decoder'],
                   'Dataset for training.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
@@ -36,32 +30,40 @@ flags.DEFINE_integer('batch_size', 512, 'Batch size.')
 flags.DEFINE_integer('lat_dim', 5, 'Latent dimension.')
 flags.DEFINE_integer('c_hid', 64, 'Hidden dimension of model.')
 
+# wandb params
+flags.DEFINE_string('wandb_project', None, 'Name of the wandb project to log experiments.')
+flags.DEFINE_string('wandb_username', None, 'Username for wandb logging.')
+
 
 def main(argv):
-    # wandb stuff
+    ############### wandb section ###############
+    # Can be ignored if not using wandb for experiment tracking
     wandb_config = dict(
         model=FLAGS.model,
         dataset=FLAGS.dataset,
-        # task=FLAGS.task,
         run_name=FLAGS.run_name,
         seed=FLAGS.seed,
-        batch_size=FLAGS.batch_size,
-        # train_steps=FLAGS.train_steps,
-        # lat_dim=FLAGS.lat_dim
+        batch_size=FLAGS.batch_size
     )
 
     gettrace = getattr(sys, 'gettrace', None)
 
+    if gettrace() or None in [FLAGS.wandb_project, FLAGS.wandb_username]:
+        print( 'Not using wandb for logging! This could be due to missing project and username flags!')
+        wandb_mode = 'offline'
+    else:
+        wandb_mode = 'online'
+
     wandb.init(
-        project='chambers',
-        entity='CausalRepresentationChambers',  # this is the team name in wandb
-        mode='online' if not gettrace() else 'offline',  # don't log if debugging
+        project=FLAGS.wandb_project,
+        entity=FLAGS.wandb_username,
+        mode=wandb_mode,
         config=wandb_config
     )
+    ##############################################
 
     # Training preparation
     torch.set_float32_matmul_precision('high')
-    # torch.multiprocessing.set_start_method('spawn')
 
     datasets, data_loaders, data_name = load_datasets(seed=FLAGS.seed,
                                                       dataset_name=FLAGS.dataset,
@@ -75,10 +77,6 @@ def main(argv):
     train_dir = os.path.join(model_dir, FLAGS.run_name, f'seed_{FLAGS.seed}', 'train')
     if not os.path.exists(train_dir):
         os.makedirs(train_dir)
-
-    # TODO: save datasets
-
-    # Train or load causal autoencoder (needed for eval)
 
     model_class = CITRISVAE
 
@@ -125,14 +123,10 @@ def main(argv):
         'graph_learning_method': 'ENCO'
     }
 
-    # Training
-    # TODO: check if trained model exists, skip training (I think best to do this with the load pretrained flag!)
-
+    # Training (includes evaluation)
     train_model(model_class=model_class,
                 train_loader=data_loaders['train'],
-                # val_loader=data_loaders['val_triplet'],
                 val_loader=data_loaders['val'],
-                # test_loader=data_loaders['test_triplet'],
                 test_loader=data_loaders['test'],
                 root_dir=train_dir,
                 seed=FLAGS.seed,
@@ -143,17 +137,13 @@ def main(argv):
                 callback_kwargs={'dataset': datasets['train'],
                                  'correlation_dataset': datasets['val'],  # Independent latents here
                                  'correlation_test_dataset': datasets['test']},
-                # var_names=datasets['train'].target_names(),
                 var_names=datasets['train'].dataset.target_names(),
-                # causal_var_info=datasets['train'].get_causal_var_info(),
                 causal_var_info=datasets['train'].dataset.get_causal_var_info(),
                 save_last_model=True,
                 cluster_logging=False,
                 **model_args)
 
     print('Training finished!')
-
-    # Evaluation
 
 
 if __name__ == '__main__':
