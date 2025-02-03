@@ -12,8 +12,7 @@ import wandb
 
 from crc.utils import get_device, NpEncoder
 from crc.baselines.contrastive_crl.src.utils import get_chamber_data
-from crc.baselines.contrastive_crl.src.models import get_contrastive_synthetic, \
-    get_contrastive_image
+from crc.baselines.contrastive_crl.src.models import get_contrastive_synthetic, get_contrastive_image
 from crc.baselines.contrastive_crl.src.training import train_model
 from crc.baselines.contrastive_crl.src.evaluation import compute_mccs, evaluate_graph_metrics
 from crc.baselines.contrastive_crl.src.data_generation import ContrastiveCRLDataset
@@ -24,11 +23,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_enum('model', 'contrast_crl', ['contrast_crl', 'contrast_crl_linear'],
                   'Model to train.')
-flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
-                                 'CausalRepresentationChambers/data/chamber_downloads',
-                    'Root directory where data is saved.')
-flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
-                    'Root directory where output is saved.')
+flags.DEFINE_string('data_root', './data/chamber_downloads', 'Root directory where data is saved.')
+flags.DEFINE_string('root_dir', './results', 'Root directory where output is saved.')
 flags.DEFINE_enum('dataset', None, ['lt_camera_v1', 'lt_camera_walks_v1',
                                     'lt_crl_benchmark_v1',
                                     'contrast_synth', 'contrast_img',
@@ -51,9 +47,14 @@ flags.DEFINE_float('mu', 0.00001, 'Mu hyperparam.')
 flags.DEFINE_float('eta', 0.0001, 'Eta hyperparam.')
 flags.DEFINE_float('kappa', 0.1, 'Kappa hyperparam.')
 
+# wandb params
+flags.DEFINE_string('wandb_project', None, 'Name of the wandb project to log experiments.')
+flags.DEFINE_string('wandb_username', None, 'Username for wandb logging.')
+
 
 def main(argv):
-    # wandb stuff
+    ############### wandb section ###############
+    # Can be ignored if not using wandb for experiment tracking
     wandb_config = dict(
         model=FLAGS.model,
         dataset=FLAGS.dataset,
@@ -67,17 +68,22 @@ def main(argv):
 
     gettrace = getattr(sys, 'gettrace', None)
 
+    if gettrace() or None in [FLAGS.wandb_project, FLAGS.wandb_username]:
+        print('Not using wandb for logging! This could be due to missing project and username flags!')
+        wandb_mode = 'offline'
+    else:
+        wandb_mode = 'online'
+
     wandb.init(
-        project='chambers',
-        entity='CausalRepresentationChambers',  # this is the team name in wandb
-        mode='online' if not gettrace() else 'offline',
-        # don't log if debugging
+        project=FLAGS.wandb_project,
+        entity=FLAGS.wandb_username,
+        mode=wandb_mode,
         config=wandb_config
     )
+    ##############################################
 
     # Training preparation
     torch.set_float32_matmul_precision('high')
-    # torch.multiprocessing.set_start_method('spawn')
 
     # Set all seeds
     torch.manual_seed(FLAGS.seed)
@@ -91,7 +97,7 @@ def main(argv):
         os.makedirs(train_dir)
 
     device = get_device()
-    print(f'using device: {device}')
+    print(f'Using device: {device}')
 
     # Training
     # Check if trained model already exists, skip training if so
