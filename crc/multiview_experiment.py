@@ -6,7 +6,6 @@ import random
 import sys
 
 from absl import flags, app
-# import faiss
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -19,16 +18,13 @@ import wandb
 from crc.utils import get_device, train_val_test_split
 from crc.shared.architectures import FCEncoder
 from crc.baselines.contrastive_crl.src.models import EmbeddingNet
-from crc.baselines.multiview_crl.invertible_network_utils import construct_invertible_mlp
-from crc.baselines.multiview_crl.datasets import Multimodal3DIdent, MultiviewSynthDataset, \
-    MultiviewChambersDataset, MultiviewChambersSemiSynthDataset
+from crc.baselines.multiview_crl.datasets import Multimodal3DIdent, \
+    MultiviewSynthDataset, MultiviewChambersDataset
 from crc.baselines.multiview_crl.encoders import TextEncoder2D
 from crc.baselines.multiview_crl.infinite_iterator import InfiniteIterator
 from crc.baselines.multiview_crl.losses import infonce_loss
 from crc.baselines.multiview_crl.main_multimodal import train_step, get_data, eval_step
 import crc.baselines.multiview_crl.dci as dci
-from crc.utils.chamber_sim.simulators.lt.image import DecoderSimple
-from crc.utils.chamber_sim.simulators.lt.sensors import Deterministic
 
 FLAGS = flags.FLAGS
 
@@ -36,17 +32,15 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_enum('model', 'multiview_crl', ['multiview_crl'],
                   'Model to train.')
-flags.DEFINE_string('data_root', '/Users/Simon/Documents/PhD/Projects/'
-                                 'CausalRepresentationChambers/data/chamber_downloads',
-                    'Root directory where data is saved.')
-flags.DEFINE_string('root_dir', '/Users/Simon/Documents/PhD/Projects/CausalRepresentationChambers/results',
-                    'Root directory where output is saved.')
-flags.DEFINE_enum('dataset', 'multimodal3di', ['multimodal3di',
+flags.DEFINE_string('data_root', './data/chamber_downloads', 'Root directory where data is saved.')
+flags.DEFINE_string('root_dir', './results', 'Root directory where output is saved.')
+flags.DEFINE_enum('dataset', 'lt_crl_benchmark_v1', ['multimodal3di',
                                                'multiview_synth',
                                                'lt_crl_benchmark_v1',
                                                'chambers_semi_synth_decoder'],
                   'Dataset for training.')
-flags.DEFINE_string('exp_name', None, 'Name for the experiment in the dataset.')
+flags.DEFINE_enum('exp_name', 'buchholz_1', ['buchholz_1', 'buchholz_1_synth_det'],
+                  'Name for the experiment in the dataset.')
 flags.DEFINE_string('task', None, 'Experimental task for training.')
 flags.DEFINE_bool('overwrite_data', False, 'Overwrite existing saved data.')
 flags.DEFINE_string('run_name', None, 'Name for the training run.')
@@ -68,6 +62,10 @@ flags.DEFINE_integer('lat_dim', 11, 'Latent dimension.')
 # Evaluation params
 flags.DEFINE_bool('eval_dci', False, 'Evaluate DCI metric.')
 flags.DEFINE_bool('eval_style', False, 'Evaluate style variables, too.')
+
+# wandb params
+flags.DEFINE_string('wandb_project', None, 'Name of the wandb project to log experiments.')
+flags.DEFINE_string('wandb_username', None, 'Username for wandb logging.')
 
 
 def get_datasets(dataset, data_root, exp_name):
@@ -106,29 +104,6 @@ def get_datasets(dataset, data_root, exp_name):
         case 'multiview_synth':
             full_dataset = MultiviewSynthDataset(
                 n=145000,
-                # transforms=[
-                #     construct_invertible_mlp(
-                #         n=3,
-                #         n_layers=3,
-                #         n_iter_cond_thresh=25000,
-                #         cond_thresh_ratio=0.001),
-                #     construct_invertible_mlp(
-                #         n=3,
-                #         n_layers=3,
-                #         n_iter_cond_thresh=25000,
-                #         cond_thresh_ratio=0.001),
-                #     construct_invertible_mlp(
-                #         n=3,
-                #         n_layers=3,
-                #         n_iter_cond_thresh=25000,
-                #         cond_thresh_ratio=0.001),
-                #     construct_invertible_mlp(
-                #         n=3,
-                #         n_layers=3,
-                #         n_iter_cond_thresh=25000,
-                #         cond_thresh_ratio=0.001)
-                # ]
-                # Alternative with encoders scaling up to larger dimension
                 transforms=[
                     EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
                     EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
@@ -169,58 +144,6 @@ def get_datasets(dataset, data_root, exp_name):
             val_dataset = Subset(full_dataset, val_idxs)
             test_dataset = Subset(full_dataset, test_idxs)
         case 'chambers_semi_synth_decoder':
-            # decoder_simu = DecoderSimple()
-            # sensor_params = {'S': np.array([[4.34165202, 2.8594438, 1.91565691],
-            #                                 [0.89410569, 1.58679242,
-            #                                  2.68477163]]),
-            #                  'd1': np.array(0.1),
-            #                  'd2': np.array(0.17),
-            #                  'd3': np.array(0.25),
-            #                  'Ts': np.array(
-            #                      [0.42685688, 0.41231782, 0.46652526]),
-            #                  'Tp': np.array(
-            #                      [0.2909342, 0.29624314, 0.30526271]),
-            #                  'Tc': np.array(
-            #                      [0.00431032, 0.01447611, 0.02041075]),
-            #                  'C': np.array(
-            #                      [0.12834946, 0.12870338, 0.13078523]),
-            #                  'c0': np.array(58.13307318503893),
-            #                  'A': np.array(1.42261211),
-            #                  'a1': np.array(506.8049747171294),
-            #                  'a2': np.array(510.98343062774353)
-            #                  }
-            # sensors_simu = Deterministic(**sensor_params)
-            # full_dataset = MultiviewChambersSemiSynthDataset(
-            #     dataset='lt_crl_benchmark_v1',
-            #     data_root=data_root,
-            #     exp_name=exp_name,
-            #     transforms=[
-            #         decoder_simu.simulate_from_inputs,
-            #         # Sensor mechanistic model,
-            #         sensors_simu.simulate_from_inputs,
-            #         sensors_simu.simulate_from_inputs,
-            #         sensors_simu.simulate_from_inputs
-            #         # Alternative mixing that keeps original dimension
-            #         # construct_invertible_mlp(
-            #         #     n=3,
-            #         #     n_layers=3,
-            #         #     n_iter_cond_thresh=25000,
-            #         #     cond_thresh_ratio=0.001),
-            #         # construct_invertible_mlp(
-            #         #     n=1,
-            #         #     n_layers=3,
-            #         #     n_iter_cond_thresh=25000,
-            #         #     cond_thresh_ratio=0.001),
-            #         # construct_invertible_mlp(
-            #         #     n=1,
-            #         #     n_layers=3,
-            #         #     n_iter_cond_thresh=25000,
-            #         #     cond_thresh_ratio=0.001)
-            #         # EmbeddingNet(3, 20, 512, hidden_layers=3, residual=False),
-            #         # EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False),
-            #         # EmbeddingNet(1, 20, 512, hidden_layers=3, residual=False)
-            #     ]
-            # )
             full_dataset = MultiviewChambersDataset(
                 dataset='lt_crl_benchmark_v1',
                 data_root=data_root,
@@ -265,15 +188,6 @@ def get_encoders(dataset):
 
             encoders = [encoder_img, encoder_txt]
         case 'multiview_synth':
-            # encoder_1 = FCEncoder(in_dim=3, latent_dim=4,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # encoder_2 = FCEncoder(in_dim=3, latent_dim=4,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # encoder_3 = FCEncoder(in_dim=3, latent_dim=4,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # encoder_4 = FCEncoder(in_dim=3, latent_dim=4,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # Alernative for other mixing (larger in dim)
             encoder_1 = FCEncoder(in_dim=20, latent_dim=4,
                                   hidden_dims=[64, 256, 256, 256, 64])
             encoder_2 = FCEncoder(in_dim=20, latent_dim=4,
@@ -304,13 +218,6 @@ def get_encoders(dataset):
                 torch.nn.LeakyReLU(),
                 torch.nn.Linear(100, 5),
             )
-            # encoder_2 = FCEncoder(in_dim=20, latent_dim=5,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # encoder_3 = FCEncoder(in_dim=20, latent_dim=5,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # encoder_4 = FCEncoder(in_dim=20, latent_dim=5,
-            #                       hidden_dims=[64, 256, 256, 256, 64])
-            # Alternative mixing that keeps original dimension
             encoder_2 = FCEncoder(in_dim=3, latent_dim=5,
                                   hidden_dims=[64, 256, 256, 256, 64])
             encoder_3 = FCEncoder(in_dim=1, latent_dim=5,
@@ -330,7 +237,7 @@ def get_train_args(dataset):
             content_indices = [[0, 10], [0, 1, 2], [0], [0]]
             subsets = [(0, 1), (0, 2), (1, 2), (0, 1, 2)]
             n_views = 3
-            style_indices = [3, 4, 5, 6, 7, 8, 9]  # Anything that is not a content var
+            style_indices = [3, 4, 5, 6, 7, 8, 9]  # Anything that is not a content variable
         case 'multiview_synth':
             modalities = ['view_1', 'view_2', 'view_3', 'view_4']
             content_indices = [[0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [2, 3],
@@ -356,14 +263,14 @@ def loss_func(z_rec_tuple, estimated_content_indices, subsets):
         criterion=torch.nn.CrossEntropyLoss(),
         tau=FLAGS.tau,
         projector=(lambda x: x),
-        # invertible_network_utils.construct_invertible_mlp(n=args.encoding_size, n_layers=2).to(device),
         estimated_content_indices=estimated_content_indices,
         subsets=subsets,
     )
 
 
 def main(argv):
-    # wandb stuff
+    ############### wandb section ###############
+    # Can be ignored if not using wandb for experiment tracking
     wandb_config = dict(
         model=FLAGS.model,
         dataset=FLAGS.dataset,
@@ -377,24 +284,27 @@ def main(argv):
 
     gettrace = getattr(sys, 'gettrace', None)
 
+    if gettrace() or None in [FLAGS.wandb_project, FLAGS.wandb_username]:
+        print('Not using wandb for logging! This could be due to missing project and username flags!')
+        wandb_mode = 'offline'
+    else:
+        wandb_mode = 'online'
+
     wandb.init(
-        project='chambers',
-        entity='CausalRepresentationChambers',  # this is the team name in wandb
-        mode='online' if not gettrace() else 'offline',
-        # don't log if debugging
+        project=FLAGS.wandb_project,
+        entity=FLAGS.wandb_username,
+        mode=wandb_mode,
         config=wandb_config
     )
+    ##############################################
 
     # Training preparation
     torch.set_float32_matmul_precision('high')
-    # torch.multiprocessing.set_start_method('spawn')
 
     # Set all seeds
     torch.manual_seed(FLAGS.seed)
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
-
-    # faiss.omp_set_num_threads(16)
 
     # Make directories to save results
     model_dir = os.path.join(FLAGS.root_dir, FLAGS.dataset, FLAGS.task, FLAGS.model)
@@ -654,10 +564,6 @@ def main(argv):
     ]
     df_results = pd.DataFrame(results, columns=columns)
     df_results.to_csv(os.path.join(eval_dir, "results.csv"))
-
-    # Log final table to wandb
-    results_table = wandb.Artifact('results_artifact', type='results')
-    results_table.add(wandb.Table(dataframe=df_results), 'results_table')
 
     print(df_results.to_string())
     print('Evaluation finished!')
