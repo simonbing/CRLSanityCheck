@@ -19,8 +19,19 @@ def get_task_environments(task):
     Returns the causal chambers experiments to include in the training data
     for a specified task.
 
-    :param task:
-    :return:
+    Parameters
+    ----------
+        task : str
+            Name of the task for training.
+
+    Returns
+    -------
+        exp_name : str
+            Name of the chambers experiment.
+        env_list : list[str]
+            List of the environments included in this task.
+        features : list[str]
+            List of features used for this task.
     """
     if task == 'lt_scm_2':
         exp_name = 'scm_2'
@@ -50,7 +61,33 @@ def get_task_environments(task):
     return exp_name, env_list, features
 
 
-def train_val_test_split(*arrays, train_size, val_size=None, test_size=None, random_state):
+def train_val_test_split(*arrays, train_size, val_size=None, test_size=None,
+                         random_state):
+    """
+    Splits input arrays into train, validation and test sets.
+
+    Parameters
+    ----------
+        *arrays : sequence of indexables with same len / shape[0]
+            Input arrays.
+        train_size : float
+            Train size fraction.
+        val_size : float, default=None
+            Validation size fraction. Must be defined if test_size is None.
+        test_size : float, default=None
+            Test size fraction. Must be defined if val_size is None.
+        random_state : int, RandomState instance or None
+            Random state for reproducibility.
+
+    Returns
+    -------
+        train_out : indexable
+            Train set.
+        val_out :  indexable
+            Validation set.
+        test_out : indexable
+            Test set.
+    """
     train_out, intermed_out = train_test_split(*arrays, train_size=train_size,
                                                random_state=random_state)
 

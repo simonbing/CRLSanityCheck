@@ -2,8 +2,25 @@ import torch.nn as nn
 
 
 class FCEncoder(nn.Module):
+    """
+    Wrapper class for fully connected nn Modules.
+    """
     def __init__(self, in_dim, latent_dim, hidden_dims, residual=False,
                  relu_slope=0.01):
+        """
+        Parameters
+        ----------
+            in_dim : int
+                Input dimension.
+            latent_dim : int
+                Final (latent) output dimension.
+            hidden_dims : list[int]
+                List of dimensions of hidden layers.
+            residual : bool, default=False
+                Whether to use residual connections.
+            relu_slope : float
+                Slope of the ReLU activation function.
+        """
         super().__init__()
 
         if not residual:
