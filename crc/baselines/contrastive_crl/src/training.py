@@ -90,10 +90,6 @@ def train_model(model, device, dl_train, dl_val, training_kwargs, z_gt=None, x_v
                               ce(logits_int, torch.ones(x_int.size(0), dtype=torch.long, device=device))
             accuracy = (torch.sum(torch.argmax(logits_obs, dim=1) == 0) +
                         torch.sum(torch.argmax(logits_int, dim=1) == 1)) / (2 * x_int.size(0))
-            # if device == 'mps':
-            #     reg_loss = eta * torch.sum(torch.abs(model.parametric_part.A))
-            # else:
-            #     reg_loss = eta * torch.sum(torch.abs(model.parametric_part.A)) + mu * get_NOTEARS_loss(model.parametric_part.A)
             reg_loss = eta * torch.sum(
                 torch.abs(model.parametric_part.A)) + mu * get_NOTEARS_loss(
                 model.parametric_part.A)
