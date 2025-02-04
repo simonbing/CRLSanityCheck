@@ -71,6 +71,29 @@ def save_images(images, dir, filename):
 
 
 def get_chamber_data(dataset, task, data_root, seed):
+    """
+    Returns a causal chambers dataset for the Contrastive CRL model.
+
+    Parameters
+    ----------
+        dataset : str
+            Name of the chambers dataset.
+        task : str
+            Experimental task.
+        data_root : str
+            Path to the saved data.
+        seed : int
+            Random seed for reproducibility.
+
+    Returns
+    -------
+        dataset_train : torch Dataset
+            Train dataset.
+        dataset_val : torch Dataset
+            Validation dataset.
+        dataset_test : torch Dataset
+            Test dataset.
+    """
     # For sanity checking contrastive CRL code
     match dataset:
         case 'contrast_synth':
@@ -241,6 +264,28 @@ def get_chamber_data(dataset, task, data_root, seed):
 
 
 def split_chamberdata(dataset, train_samples, val_samples):
+    """
+    Splits a chambers dataset in train/val/test sets with stratified splits
+    according to interventional environments.
+
+    Parameters
+    ----------
+        dataset : torch Dataset
+            Input dataset to split.
+        train_samples : int
+            Number of samples for train set.
+        val_samples : int
+            Number of samples for validation set.
+
+    Returns
+    -------
+        train_idx : list[int]
+            Indices for train set.
+        val_idx : list[int]
+            Indices for validation set.
+        test_idx : list[int]
+            Indices for test set.
+    """
     train_idx = []
     val_idx = []
     for iv in np.unique(dataset.iv_names):
