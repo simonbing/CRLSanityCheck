@@ -38,9 +38,6 @@ conda activate crc
 
 
 ## Experiments
-- mention that we implement all of this with causal chambers package and data can be found there
-- data is automaticaly downloaded when running an experiment
-- add subsections with examples for all three methods
 
 We use the `causalchamber` 
 [package](https://pypi.org/project/causalchamber/) for all of our experiments.
