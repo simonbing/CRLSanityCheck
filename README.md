@@ -27,7 +27,7 @@ We recommend installing the required packages in a conda environment. To
 do so:
 1. Create a new conda environment from the provided config file:
 ```
-conda env create -f environments.yml
+conda env create -f environment.yml
 ```
 
 2. Activate the conda environment:
