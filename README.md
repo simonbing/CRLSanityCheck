@@ -10,6 +10,10 @@ Juan L. Gamella*, Simon Bing* and Jakob Runge.
 <img src="figures/tunnel.png" width="100%" align="center"/>
 </p>
 
+## Datasets
+
+The datasets used in the benchmark can be downloaded from the corresponding [dataset page](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1) of the [Dataset Repository](https://github.com/juangamella/causal-chamber) of the Causal Chamber project.
+
 ## Setup
 
 Since we include the source code of several different methods as submodules,
