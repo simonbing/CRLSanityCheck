@@ -41,7 +41,7 @@ conda activate crc
 
 #### Accessing the datasets
 
-The data used for the benchmark is part of the `lt_crl_benchmark_v1` dataset. Additional documentation and download instructions are available in its [dataset page](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1) in the [dataset repository](https://github.com/juangamella/causal-chamber) of the Causal Chamber project.
+The data used for the benchmark is part of the `lt_crl_benchmark_v1` dataset. You can download it from its [dataset page](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1) in the [dataset repository](https://github.com/juangamella/causal-chamber) of the Causal Chamber project.
 
 For our experiments, we use `causalchamber` [package](https://github.com/juangamella/causal-chamber-package_internal) to directly download and access the datasets from the Python code. Each dataset is automatically downloaded when running the respective experiment.
 
