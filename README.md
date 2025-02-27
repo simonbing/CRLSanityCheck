@@ -3,7 +3,7 @@
 
 
 Official code repository for the paper **Sanity Checking Causal
-Representation Learning on a Simple Real-World System** by
+Representation Learning on a Simple Real-World System** (2025) by
 Juan L. Gamella*, Simon Bing* and Jakob Runge.
 
 <p align="center">
