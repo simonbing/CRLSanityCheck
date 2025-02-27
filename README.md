@@ -100,9 +100,9 @@ the `--task` flag to a name that reflects this change.
 
 ## Help and feedback
 
-In our paper, we only consider a handful of representative CRL methods. Furthermore, the datasets in our benchmark constitute only a small fraction of all experiments that are possible with the [Causal Chambers](https://causalchamber.ai).
+In our paper, we only evaluate a handful of CRL methods representative of different families. Furthermore, the datasets in our benchmark constitute only a small fraction of all experiments that are possible with the [Causal Chambers](https://causalchamber.ai).
 
-Please reach out if you need help in evaluating a specific method, you have an idea for further experiments with the chambers, or encounter a bug. You can open a [GitHub Issue](https://github.com/simonbing/CRLSanityCheck/issues) or send us an [email](mailto:juangamella@gmail.com).
+Therefore: please reach out if you need help in evaluating a new method, you have an idea for further experiments with the chambers, or encounter a bug. You can open a [GitHub Issue](https://github.com/simonbing/CRLSanityCheck/issues) or send us an [email](mailto:juangamella@gmail.com,bing@campus.tu-berlin.de). We are happy to help :)
 
 ## License
 
