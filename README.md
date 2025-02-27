@@ -10,6 +10,18 @@ Juan L. Gamella*, Simon Bing* and Jakob Runge.
 <img src="figures/tunnel.png" width="100%" align="center"/>
 </p>
 
+If you use our code or datasets in your work, please consider citing:
+
+```bibtex
+@article{gamellabing2025sanity,
+  title     = {Sanity Checking Causal Representation Learning on a Simple Real-World System},
+  author    = {Gamella*, Juan L. and Bing*, Simon and Runge, Jakob},
+  year      = {2025},
+  journal   = {arXiv preprint arXiv:TODO},
+  note      = {*equal contribution}
+}
+```
+
 ## Setup
 
 Since we include the source code of several different methods as submodules,
@@ -24,18 +36,14 @@ git submodule update --recursive --remote
 ```
 
 We recommend installing the required packages in a conda environment. To
-do so:
-1. Create a new conda environment from the provided config file:
+do so, first create a new conda environment from the provided config file:
 ```
 conda env create -f environment.yml
 ```
-
-2. Activate the conda environment:
+and activate it
 ```
 conda activate crc
 ```
-
-
 
 ## Experiments
 
@@ -90,25 +98,13 @@ python citris_experiment.py --dataset chambers \
 To use the synthetic data, set `--dataset chambers_semi_synth_decoder` and optionally change
 the `--task` flag to a name that reflects this change.
 
-## Adding methods
-In our paper, we only consider a handful of representative CRL methods.
-The Causal Chambers are however flexible enough to genrate data that accommodates
-the assumptions of virtually any CRL method. If you are interested in applying
-existing datasets to a specific method and require support, or wish to collect a new dataset
-for a specific experiment, please do not hesitate to reach out! You can either open
-a github issue or send us an email.
+## Help and feedback
 
-## Citation
-If you find our paper interesting or use the code in this repository,
-please consider citing:
+In our paper, we only consider a handful of representative CRL methods. Furthermore, the datasets in our benchmark constitute only a small fraction of all experiments that are possible with the [Causal Chambers](https://causalchamber.ai).
 
-```bibtex
-@article{gamellabing2025sanity,
-  title     = {Sanity Checking Causal Representation Learning on a Simple Real-World System},
-  author    = {Gamella*, Juan L. and Bing*, Simon and Runge, Jakob},
-  year      = {2025},
-  journal   = {arXiv preprint arXiv:TODO},
-  eprint    = {TODO},
-  note      = {*equal contribution}
-}
-```
+Please reach out if you need help in evaluating a specific method, you have an idea for further experiments with the chambers, or encounter a bug. You can open a [GitHub Issue](https://github.com/simonbing/CRLSanityCheck/issues) or send us an [email](mailto:juangamella@gmail.com).
+
+## License
+
+The code in this repository is shared under the permissive [MIT license](https://opensource.org/license/mit/). A copy of can be found in [LICENSE](LICENSE).
+
