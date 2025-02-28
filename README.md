@@ -2,7 +2,7 @@
 [![Paper (CRL Sanity Check)](https://img.shields.io/static/v1.svg?logo=arxiv&label=Paper&message=CRLSanityCheck&color=green)](TODO)
 
 
-Official code repository for the paper **Sanity Checking Causal
+Official code repository for the [paper](https://arxiv.org/abs/2502.20099) **Sanity Checking Causal
 Representation Learning on a Simple Real-World System** (2025) by
 Juan L. Gamella*, Simon Bing* and Jakob Runge.
 
@@ -17,7 +17,7 @@ If you use our code or datasets in your work, please consider citing:
   title     = {Sanity Checking Causal Representation Learning on a Simple Real-World System},
   author    = {Gamella*, Juan L. and Bing*, Simon and Runge, Jakob},
   year      = {2025},
-  journal   = {arXiv preprint arXiv:TODO},
+  journal   = {arXiv preprint arXiv:2502.20099},
   note      = {*equal contribution}
 }
 ```
@@ -49,9 +49,9 @@ conda activate crc
 
 #### Accessing the datasets
 
-The data used for the benchmark is part of the `lt_crl_benchmark_v1` dataset, which is hosted in the [dataset repository](https://github.com/juangamella/causal-chamber) of the Causal Chamber project. You can download directly from its [dataset page](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1).
+The data used for the benchmark is part of the `lt_crl_benchmark_v1` dataset, which is hosted in the [dataset repository](https://github.com/juangamella/causal-chamber) of the Causal Chamber project. You can download it directly from its [dataset page](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1).
 
-For our experiments, we use the `causalchamber` [package](https://github.com/juangamella/causal-chamber-package_internal) to directly download and access the datasets from the Python code. Each dataset is automatically downloaded when running the respective experiment.
+For our experiments, we use the `causalchamber` [package](https://github.com/juangamella/causal-chamber-package) to directly download and access the datasets from the Python code. Each dataset is automatically downloaded when running the respective experiment.
 
 ### Contrastive CRL
 For the real-data experiment using the [Contrastive CRL](https://arxiv.org/abs/2306.02235) method, run
