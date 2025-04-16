@@ -2,13 +2,25 @@
 [![Paper (CRL Sanity Check)](https://img.shields.io/static/v1.svg?logo=arxiv&label=Paper&message=CRLSanityCheck&color=green)](TODO)
 
 
-Official code repository for the paper **Sanity Checking Causal
-Representation Learning on a Simple Real-World System** by
+Official code repository for the [paper](https://arxiv.org/abs/2502.20099) **Sanity Checking Causal
+Representation Learning on a Simple Real-World System** (2025) by
 Juan L. Gamella*, Simon Bing* and Jakob Runge.
 
 <p align="center">
 <img src="figures/tunnel.png" width="100%" align="center"/>
 </p>
+
+If you use our code or datasets in your work, please consider citing:
+
+```bibtex
+@article{gamellabing2025sanity,
+  title     = {Sanity Checking Causal Representation Learning on a Simple Real-World System},
+  author    = {Gamella*, Juan L. and Bing*, Simon and Runge, Jakob},
+  year      = {2025},
+  journal   = {arXiv preprint arXiv:2502.20099},
+  note      = {*equal contribution}
+}
+```
 
 ## Setup
 
@@ -24,26 +36,22 @@ git submodule update --recursive --remote
 ```
 
 We recommend installing the required packages in a conda environment. To
-do so:
-1. Create a new conda environment from the provided config file:
+do so, first create a new conda environment from the provided config file:
 ```
 conda env create -f environment.yml
 ```
-
-2. Activate the conda environment:
+and activate it
 ```
 conda activate crc
 ```
 
-
-
 ## Experiments
 
-We use the `causalchamber` 
-[package](https://pypi.org/project/causalchamber/) for all of our experiments.
-Specifically, we use the `lt_crl_benchmark_v1` [dataset](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1). Additional details 
-and documentation can be found in the Causal Chambers [repository](https://github.com/juangamella/causal-chamber).
-All datasets are automatically downloaded and accessed when running their respective experiment.
+#### Accessing the datasets
+
+The data used for the benchmark is part of the `lt_crl_benchmark_v1` dataset, which is hosted in the [dataset repository](https://github.com/juangamella/causal-chamber) of the Causal Chamber project. You can download it directly from its [dataset page](https://github.com/juangamella/causal-chamber/tree/main/datasets/lt_crl_benchmark_v1).
+
+For our experiments, we use the `causalchamber` [package](https://github.com/juangamella/causal-chamber-package) to directly download and access the datasets from the Python code. Each dataset is automatically downloaded when running the respective experiment.
 
 ### Contrastive CRL
 For the real-data experiment using the [Contrastive CRL](https://arxiv.org/abs/2306.02235) method, run
@@ -90,25 +98,13 @@ python citris_experiment.py --dataset chambers \
 To use the synthetic data, set `--dataset chambers_semi_synth_decoder` and optionally change
 the `--task` flag to a name that reflects this change.
 
-## Adding methods
-In our paper, we only consider a handful of representative CRL methods.
-The Causal Chambers are however flexible enough to genrate data that accommodates
-the assumptions of virtually any CRL method. If you are interested in applying
-existing datasets to a specific method and require support, or wish to collect a new dataset
-for a specific experiment, please do not hesitate to reach out! You can either open
-a github issue or send us an email.
+## Help and feedback
 
-## Citation
-If you find our paper interesting or use the code in this repository,
-please consider citing:
+In our paper, we only evaluate a handful of CRL methods representative of different families. Furthermore, the datasets in our benchmark constitute only a small fraction of all experiments that are possible with the [Causal Chambers](https://causalchamber.ai).
 
-```bibtex
-@article{gamellabing2025sanity,
-  title     = {Sanity Checking Causal Representation Learning on a Simple Real-World System},
-  author    = {Gamella*, Juan L. and Bing*, Simon and Runge, Jakob},
-  year      = {2025},
-  journal   = {arXiv preprint arXiv:TODO},
-  eprint    = {TODO},
-  note      = {*equal contribution}
-}
-```
+Therefore: please reach out if you need help in evaluating a new method, you have an idea for further experiments with the chambers, or encounter a bug. You can open a [GitHub Issue](https://github.com/simonbing/CRLSanityCheck/issues) or send us an [email](mailto:juangamella@gmail.com,bing@campus.tu-berlin.de). We are happy to help :)
+
+## License
+
+The code in this repository is shared under the permissive [MIT license](https://opensource.org/license/mit/). A copy of can be found in [LICENSE](LICENSE).
+
