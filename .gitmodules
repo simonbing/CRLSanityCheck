@@ -1,9 +1,6 @@
 [submodule "crc/baselines/discrepancy_vae"]
 	path = crc/baselines/discrepancy_vae
 	url = git@github.com:simonbing/discrepancy_vae.git
-[submodule "crc/utils/chamber_sim"]
-	path = crc/utils/chamber_sim
-	url = git@github.com:juangamella/chamber-simulators_internal.git
 [submodule "crc/baselines/multiview_crl"]
 	path = crc/baselines/multiview_crl
 	url = git@github.com:simonbing/multiview-crl.git

@@ -1,6 +1,7 @@
 import os
 import numbers
 
+from causalchamber.simulators.lt.image import DecoderSimple
 import torch
 from torch.utils.data import Subset
 from PIL import Image
@@ -9,7 +10,6 @@ import numpy as np
 from crc.baselines.contrastive_crl.src.data_generation import get_data_from_kwargs, ChamberDataset
 from crc.shared.torch_datasets import ChambersDatasetContrastive, ChambersDatasetContrastiveSemiSynthetic, ChambersDatasetContrastiveSynthetic
 from crc.baselines.contrastive_crl.src.models import EmbeddingNet
-from crc.utils.chamber_sim.simulators.lt.image import DecoderSimple
 
 
 def sanity_checks_kwargs(data_kwargs, model_kwargs, training_kwargs):
